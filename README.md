@@ -43,7 +43,7 @@ Deepfake content across images, video, audio, and text is increasingly convincin
 This repository primarily serves as the codebase for an MSc dissertation project. While formal contributions are not expected, feedback or suggestions are welcome.
 
 ## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgements
 
