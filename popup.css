@@ -2,7 +2,7 @@
 
 body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    width: 300px; /* Fixed width for the popup */
+    width: 300px;
     margin: 0;
     padding: 0;
     background-color: #f0f2f5;
@@ -40,7 +40,7 @@ body {
   .menu-items {
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Space between buttons */
+    gap: 10px;
     margin-bottom: 20px;
   }
   
@@ -62,11 +62,11 @@ body {
   
   .menu-button .icon {
     margin-right: 10px;
-    font-size: 1.2em; /* Adjust emoji size */
+    font-size: 1.2em; 
   }
   
   .menu-button.primary {
-    background-color: #007bff; /* Blue */
+    background-color: #007bff;
     color: white;
   }
   
@@ -76,7 +76,7 @@ body {
   }
   
   .menu-button.secondary {
-    background-color: #e9ecef; /* Light gray */
+    background-color: #e9ecef;
     color: #495057;
   }
   
@@ -92,20 +92,20 @@ body {
   }
   
   .status-message {
-    min-height: 20px; /* Reserve space for messages */
+    min-height: 20px;
     margin-top: 10px;
     font-size: 0.9em;
     color: #555;
     text-align: center;
-    word-wrap: break-word; /* Ensure long messages wrap */
+    word-wrap: break-word;
   }
   
   .status-message.success {
-    color: #28a745; /* Green for success */
+    color: #28a745; 
   }
   
   .status-message.error {
-    color: #dc3545; /* Red for errors */
+    color: #dc3545; 
   }
   
   .footer {
