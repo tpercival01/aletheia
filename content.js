@@ -1,10 +1,3 @@
-console.log("Super Screenshot Tool content script loaded.");
+const webpage_html = document.documentElement.innerHTML;
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "highlightElements") {
-    console.log("Content script received 'highlightElements' message.");
-
-    sendResponse({ status: "elements_highlighted", count: 0 });
-    return true;
-  }
-});
+chrome.runtime.sendMessage({ type: "PAGE_LOADED_HTML", html: webpage_html });
