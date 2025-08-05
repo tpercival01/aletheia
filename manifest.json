@@ -5,10 +5,15 @@
     "description": "Detect AI generated content",
     "action": {
       "default_icon": {
-        "16": "icons/default16.png"
+        "128": "icons/LOGO_128.png"
       },
       "default_popup": "popup.html",
       "default_title": "Open Aletheia"
+    },
+    "icons": {
+        "16": "icons/LOGO_16.png",
+        "48": "icons/LOGO_48.png",
+        "128": "icons/LOGO_128.png"
     },
     "permissions": ["activeTab", "scripting", "storage", "downloads"],
     "host_permissions": ["<all_urls>"],

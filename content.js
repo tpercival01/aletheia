@@ -7,130 +7,67 @@ let payloadImages = []
 let payloadTexts = []
 let payloadIframes = []
 
-function isValidTextNode(node) {
-  // skip if in a header/nav/footer
-  if (node.parentElement.closest('header, nav, footer')) return false
-  // collapse whitespace & trim
-  const txt = node.textContent.replace(/\s+/g, ' ').trim()
-  return txt.length >= 50
-}
+function process_images(images){
+  for (let i = 0; i < images.length; i++){
+    let image = images[i];
+    if (image.width > 30 && image.height > 30) {
+      if (image.src && !processedImages.has(image)){
+        processedImages.add(image);
 
-function processTextNode(node) {
-  const txt = node.textContent.replace(/\s+/g, ' ').trim()
-  if (txt.length < 50) return
-  if (node.parentElement.closest('header, nav, footer')) return
-  if (processedTexts.has(txt)) return
-  processedTexts.add(txt)
-  payloadTexts.push(txt)
-}
+        let temp_image = {
+          "alt": image.alt,
+          "src": image.src
+        }
 
-function isValidImage(img) {
-  // skip tiny/decorative
-  if (img.naturalWidth < 40 || img.naturalHeight < 40) return false
-  // skip if in boilerplate
-  //if (img.closest('header, nav, footer')) return false
-  return !!img.currentSrc
-}
-
-function processImage(img) {
-  if (!isValidImage(img)) return
-  const key = img.currentSrc + '|' + img.alt
-  if (processedImages.has(key)) return
-  processedImages.add(key)
-  payloadImages.push({ src: img.currentSrc, alt: img.alt })
-}
-
-function processIframe(iframe) {
-  const src = iframe.src
-  if (!src || processedIframes.has(src)) return
-  processedIframes.add(src)
-  payloadIframes.push(src)
-}
-
-// Recursively scan a node (used by MutationObserver)
-function traverseNode(node) {
-  if (node.nodeType === Node.TEXT_NODE) {
-    if (isValidTextNode(node)) processTextNode(node)
-  } else if (node.nodeType === Node.ELEMENT_NODE) {
-    const tag = node.tagName
-    if (tag === 'IMG') {
-      processImage(node)
-    } else if (tag === 'IFRAME') {
-      // same-origin frames have contentDocument
-      try {
-        if (!node.contentDocument) processIframe(node)
-      } catch (_) {
-        processIframe(node)
+        payloadImages.push(temp_image)
       }
-    } else {
-      node.childNodes.forEach(traverseNode)
     }
   }
+
 }
 
-// Send whatever we’ve collected (if non-empty)
-function sendPayload() {
-  if (
-    payloadImages.length === 0 &&
-    payloadTexts.length === 0 &&
-    payloadIframes.length === 0
-  ) {
-    return
+function process_texts(texts){
+  for (let j = 0; j < texts.length; j++){
+    let text = texts[j];
+    
+    //payloadTexts.push(text.innerHTML);
   }
+
   chrome.runtime.sendMessage({
-    type: 'SCRAPED_PAYLOAD',
+    type: "PARSED_TEXT",
     payload: {
-      images: payloadImages,
-      texts: payloadTexts,
-      iframes: payloadIframes
+      data: payloadTexts,
+      source: "content"
     }
-  })
-  // reset for next batch
-  payloadImages = []
-  payloadTexts = []
-  payloadIframes = []
+  });
+}
+
+function process_videos(videos) {
+
+}
+
+function process_iframes(iframes){
+
 }
 
 function scrapeInitial() {
-  // images
-  document.querySelectorAll('img').forEach(processImage)
+  // Images
+  let images = document.querySelectorAll('img');
+  process_images(images);
+  // Text
+  let texts = document.querySelectorAll('p');
+  process_texts(texts);
 
-  // text nodes
-  const walker = document.createTreeWalker(
-    document.body,
-    NodeFilter.SHOW_TEXT,
-    {
-      acceptNode: node =>
-        isValidTextNode(node)
-          ? NodeFilter.FILTER_ACCEPT
-          : NodeFilter.FILTER_REJECT
-    },
-    false
-  )
-  while (walker.nextNode()) {
-    processTextNode(walker.currentNode)
-  }
+  let videos = document.querySelectorAll('video');
 
-  // cross-origin iframes
-  document.querySelectorAll('iframe').forEach(iframe => {
-    try {
-      if (!iframe.contentDocument) processIframe(iframe)
-    } catch (_) {
-      processIframe(iframe)
-    }
-  })
+  let audios = document.querySelectorAll('audio');
+
+  let iframes = document.querySelectorAll('iframe');
+
 }
 
 function setup() {
   scrapeInitial()
-
-  const mo = new MutationObserver(muts => {
-    muts.forEach(m => {
-      m.addedNodes.forEach(traverseNode)
-    })
-    sendPayload()
-  })
-  mo.observe(document.body, { childList: true, subtree: true })
 }
 
 if (

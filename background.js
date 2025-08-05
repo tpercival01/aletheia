@@ -1,40 +1,45 @@
-let processingInterval = null;
-function startProcessingIndicator() {
-  const frames = [
-    {16: "icons/indicator_16_a.png", 32: "icons/indicator_32_a.png"},
-    {16: "icons/indicator_16_b.png", 32: "icons/indicator_32_b.png"}
-  ];
-
-  let idx = 0;
-
-  processingInterval = setInterval(() => {
-    chrome.action.setIcon({path: frames[idx]});
-    idx = (idx + 1) % frames.length;
-  }, 500);
-}
-
-function stopProcessingIndicator() {
-  if (processingInterval){
-    clearInterval(processingInterval);
-    processingInterval = null;
-  }
-
-  chrome.action.setIcon({
-    path: {16: "icons/default16.png", 32: "icons/default32.png"}
-  });
-}
+let tabStates = {};
+let isCurrentlyProcessing = false;
+let tabID = "";
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "SCRAPED_PAYLOAD") {
-    console.log("Received ", message);
+  if (isCurrentlyProcessing){return;}
+  isCurrentlyProcessing = true;
+  tabID = sender.tab.id;
+
+  tabStates[tabID] = {
+    status: 'processing',
+    results: []
+  }
+
+  switch (message.type){
+    case "PARSED_TEXT":
+      scanStatus = 'processing';
+      change_popup();
+    
+    case "GET_STATUS":
+      sendResponse({status: scanStatus});
+      return true;
+    
+    case "SCAN_AGAIN":
+      console.log("Asking content to scan again");
+      sendResponse({status: 'Scanning'});
+      return true;
   }
 });
 
-chrome.action.onClicked.addListener(() => {
-  startProcessingIndicator();
-  console.log("started")
-  setTimeout(() => {
-    stopProcessingIndicator();
-    console.log("Stopped")
-  }, 5000);
-})
+function change_popup(){
+  //chrome.action.setIcon({path: "icons/indicator_16_b.png"});
+  chrome.action.setBadgeText({text: "..."});
+  chrome.action.setBadgeBackgroundColor({color: "#777777"});
+}
+
+setTimeout(() => {
+  chrome.action.setIcon({path: "icons/LOGO_128.png"});
+  chrome.action.setBadgeText({text:''});
+  isCurrentlyProcessing = false;
+  tabStates[tabID] = {
+    status: 'Complete',
+    results: []
+  }
+}, 5000)
