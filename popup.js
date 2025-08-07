@@ -1,30 +1,33 @@
 const statusMessage = document.getElementById("status_message");
 const scanAgainButton = document.getElementById("scan_again");
+const resetPageButton = document.getElementById("reset_button");
 
-scanAgainButton.addEventListener(("click"), (e) => {
-  const response = chrome.runtime.sendMessage({
-    type: "SCAN_AGAIN",
-    payload: {
+resetPageButton.addEventListener("click", async () => {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "RESET_PAGE",
       source: "popup"
-    }
-  });
+    });
 
-  change_ui(response);
+    if (response && response.status){
+      statusMessage.innerHTML = "Status: " + response.status;
+    }
+  }catch (error) {
+    console.error("Error sending message: ", error);
+  }
 });
 
-async function change_ui(response){
-  const raw_response = await response;
-  statusMessage.innerHTML = "Status: " + raw_response.status;
-}
-
-function setup(){
-  const response = chrome.runtime.sendMessage({
-    type: "GET_STATUS",
-    payload: {
+scanAgainButton.addEventListener("click", async () => {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "SCAN_AGAIN",
       source: "popup"
-    }
-  });
-  change_ui(response);
-}
+    });
 
-setup();
+    if (response && response.status){
+      statusMessage.innerHTML = "Status: " + response.status;
+    }
+  } catch (error) {
+    console.error("Error sending message: ", error)
+  }
+})
