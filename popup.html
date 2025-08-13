@@ -8,37 +8,21 @@
     <div class="container">
       <header>
         <div class="header-left">
-          <img src="icons/base_32.png" alt="Aletheia" class="logo" />
           <h1>Aletheia</h1>
         </div>
         <!-- Add a settings icon here later -->
       </header>
 
       <main>
-        <div id="status_message" class="status--idle">Status: Idle</div>
+        <div id="status_message" class="status--idle">Status: </div>
         <div class="button-group">
-          <button id="scan_again">Scan Page</button>
-          <button id="reset_button">Reset Highlights</button>
+          <button id="scan_again" class="hidden">Scan Page</button>
+          <button id="reset_button" class="hidden">Reset Highlights</button>
         </div>
       </main>
 
       <section id="results_breakdown" class="hidden">
-        <h2>Breakdown</h2>
-        <ul id="results_list">
-          <!-- JS will populate this. Example: -->
-          <li class="result-item" data-severity="error">
-            <span class="result-text"
-              >"In the digital age, content is king..."</span
-            >
-            <span class="result-confidence">98% AI</span>
-          </li>
-          <li class="result-item" data-severity="warning">
-            <span class="result-text"
-              >"Our synergistic solutions leverage..."</span
-            >
-            <span class="result-confidence">75% AI</span>
-          </li>
-        </ul>
+        <!-- TODO -->
       </section>
 
       <footer class="footer">

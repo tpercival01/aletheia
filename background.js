@@ -1,46 +1,153 @@
-let tabStates = {};
-let isCurrentlyProcessing = false;
-let tabID = "";
+let tabState = {
+  tabID: null,
+  status: 'idle',
+  results: [],
+  startedAt: null
+}
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (isCurrentlyProcessing){return;}
-  isCurrentlyProcessing = true;
-
   switch (message.type){
-    case "PAYLOAD":
-      scanStatus = 'processing';
-      change_popup();
-      payload = process_payload(message.payload);
-      sendResponse(payload);
+    case "PROCESS":
+      change_popup("Processing");
+      tabState = {
+        tabID: tabState.tabID,
+        status: 'Processing',
+        results: message.payload,
+        startedAt: Date.now()
+      };
+
+      (async function runProcess(){
+        try {
+          const payload = await process_payload(message.payload);
+          sendResponse(payload);
+      
+          tabState.status = "Completed";
+          change_popup("Completed");
+        } catch (err){
+          console.error("error ", err);
+        }
+      })();
+
       return true;
       
     case "SCAN_AGAIN":
       console.log("Asking content to scan again");
-      sendResponse({status: 'Scanning'});
-      isCurrentlyProcessing = false;
+
+      tabState = {
+        tabID: tabState.id,
+        status: 'Processing',
+        results: [],
+        startedAt: Date.now()
+      }
+
+      sendResponse("SCAN AGAIN");
+      call_to_scan_again();
       return true;
     
     case "RESET_PAGE":
       console.log("Resetting page and all contents.");
-      sendResponse({status: "Resetting"});
-      isCurrentlyProcessing = false;
+      tabState = {
+        tabID: tabState.id,
+        status: 'Idle',
+        results: [],
+        startedAt: Date.now()
+      }
+
+      sendResponse("RESETTING");
+      call_to_reset();
+      return true;
+    
+    case "GET_POPUP_STATE":
+      console.log("Getting current state")
+      sendResponse("GETTING STATE");
       return true;
   }
 });
 
-function process_payload(payload){
-  let text_payload = payload.text.data;
+async function process_payload(payload){
+  //let text_payload = payload.text.data;
   let images_payload = payload.images.data;
 
   for (const image of images_payload){
     image.confidence = Math.random();
   }
 
+  tabState = {
+    tabID: null,
+    status: 'Processing',
+    results: [images_payload],
+    startedAt: null
+  }
+  await new Promise(r => setTimeout(r, 10000));
   return images_payload;
 }
 
-function change_popup(){
-  //chrome.action.setIcon({path: "icons/indicator_16_b.png"});
-  chrome.action.setBadgeText({text: "..."});
-  chrome.action.setBadgeBackgroundColor({color: "#777777"});
+function change_popup(process){
+  console.log(process)
+  switch(process){
+    case "Processing":
+      chrome.action.setBadgeText({text: "..."});
+      chrome.action.setBadgeBackgroundColor({color: "#777777"});
+      break;
+    case "Completed":
+      chrome.action.setBadgeText({text: ""});
+      break;
+  }
 }
+
+async function call_to_reset(){
+  // ask to reset everything to beginning
+  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+  if (tab?.id){
+    const response = await chrome.tabs.sendMessage(tab.id, {
+      type: "RESET_PAGE",
+      source: "background"
+    });
+    console.log(response);
+  }
+  tabState = {
+    tabID: tab.id,
+    status: 'Idle',
+    results: [],
+    startedAt: null
+  }
+  
+  // reset popup
+
+  chrome.action.setBadgeText({text: ""});
+}
+
+async function call_to_scan_again(){
+  // ask to scan again
+  const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+  if (tab?.id){
+    const response = await chrome.tabs.sendMessage(tab.id, {
+      type: "SCAN_AGAIN",
+      source: "background"
+    })
+
+    console.log(response);
+  }
+
+  tabState = {
+    tabID: tab.id,
+    status: 'Processing',
+    results: [],
+    startedAt: null
+  }
+}
+// use this for tab switching.
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  const [tab] = await chrome.tabs.query({
+    active: true, 
+    currentWindow: true
+  });
+
+  tabState = {
+    tabID: tab.id,
+    status: 'idle',
+    results: [],
+    startedAt: null
+  }
+  console.log("on activate ", tabState)
+});

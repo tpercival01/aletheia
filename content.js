@@ -1,18 +1,30 @@
-// Keep track of what is already processed
-const processedImages = new Set()
-const processedTexts = new Set()
-const processedIframes = new Set()
-
-let payloadImages = []
-let payloadTexts = []
-let payloadIframes = []
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  switch (message.type){
-    case "PAYLOAD":
-      console.log(message.payload);
+  switch(message.type) {
+    case "RESET_PAGE":
+      console.log("RESETTING")
+      reset_everything();
+      
+      sendResponse({reply: "RESET DONE."});
+      return true;
+    
+    case "SCAN_AGAIN":
+      console.log("SCANNING AGAIN")
+      scrapeInitial();
+
+      sendResponse({reply: "SCANNED AGAIN"});
+      return true;
   }
 });
+
+// Create sets to keep track of media
+// Create arrays for eventual payload to send to background.js
+const processedImages = new Set();
+const processedTexts = new Set();
+const processedIframes = new Set();
+
+let payloadImages = [];
+let payloadTexts = [];
+let payloadIframes = [];
 
 function process_images(images){
   for (let i = 0; i < images.length; i++){
@@ -119,8 +131,8 @@ function scrapeInitial() {
       text_elements.add(element);
     }
   });
-  //process_texts(text_elements);
-  processedTexts.add("Hello")
+
+  process_texts(text_elements);
   let videos = document.querySelectorAll('video');
 
   let audios = document.querySelectorAll('audio');
@@ -128,15 +140,14 @@ function scrapeInitial() {
   let iframes = document.querySelectorAll('iframe');
 
 
-  setTimeout(async () => {
-    await send_payload();
-  }, 5000);
+  send_payload();
 }
 
 async function send_payload(){
+  console.log("send message content")
   try {
     const response = await chrome.runtime.sendMessage({
-    type: "PAYLOAD",
+    type: "PROCESS",
     payload: {
       text: {
         data: payloadTexts,
@@ -148,8 +159,9 @@ async function send_payload(){
       }
     }
     });
+    console.log("received ", response)
     const processed_payload = response;
-    highlight_elements(processed_payload);
+    //highlight_elements(processed_payload);
   } catch (error) {
       console.log(error);
   }
@@ -175,4 +187,20 @@ if (document.readyState === 'interactive' || document.readyState === 'complete')
   scrapeInitial();
 } else {
   window.addEventListener('DOMContentLoaded', setup);
+}
+
+function reset_everything(){
+  for (const item of payload){
+    let temp = document.evaluate(item.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    temp.style.removeProperty("box-shadow");
+    temp.style.removeProperty("border-radius");
+  }
+
+  processedImages = new Set();
+  processedTexts = new Set();
+  processedIframes = new Set();
+
+  payloadImages = [];
+  payloadTexts = [];
+  payloadIframes = [];
 }

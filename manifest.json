@@ -15,7 +15,7 @@
         "48": "icons/LOGO_48.png",
         "128": "icons/LOGO_128.png"
     },
-    "permissions": ["activeTab", "scripting", "storage", "downloads"],
+    "permissions": ["activeTab", "scripting", "storage", "downloads", "tabs"],
     "host_permissions": ["<all_urls>"],
     "background": {
         "service_worker": "background.js"
