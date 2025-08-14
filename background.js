@@ -34,32 +34,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.log("Asking content to scan again");
 
       tabState = {
-        tabID: tabState.id,
+        tabID: tabState.tabID,
         status: 'Processing',
         results: [],
         startedAt: Date.now()
       }
-
-      sendResponse("SCAN AGAIN");
+      sendResponse(tabState);
       call_to_scan_again();
       return true;
     
-    case "RESET_PAGE":
+    case "RESET_PAGE_POPUP":
       console.log("Resetting page and all contents.");
       tabState = {
-        tabID: tabState.id,
-        status: 'Idle',
+        tabID: tabState.tabID,
+        status: 'Resetting',
         results: [],
         startedAt: Date.now()
       }
-
-      sendResponse("RESETTING");
+      sendResponse(tabState);
       call_to_reset();
       return true;
     
     case "GET_POPUP_STATE":
       console.log("Getting current state")
-      sendResponse("GETTING STATE");
+      sendResponse(tabState);
       return true;
   }
 });
@@ -68,17 +66,36 @@ async function process_payload(payload){
   //let text_payload = payload.text.data;
   let images_payload = payload.images.data;
 
+  let small = [];
+  let medium = [];
+  let large = [];
+
   for (const image of images_payload){
     image.confidence = Math.random();
+    if (image.confidence > 0.8){
+      large.push(image);
+    } else if (image.confidence > 0.5){
+      medium.push(image);
+    } else{
+      small.push(image);
+    }
   }
 
   tabState = {
     tabID: null,
     status: 'Processing',
-    results: [images_payload],
+    results: [
+      {
+        "small": small,
+        "medium": medium,
+        "large": large
+
+      }
+    ],
     startedAt: null
   }
-  await new Promise(r => setTimeout(r, 10000));
+  await new Promise(r => setTimeout(r, 2000));
+  console.log(tabState);
   return images_payload;
 }
 
@@ -96,29 +113,29 @@ function change_popup(process){
 }
 
 async function call_to_reset(){
-  // ask to reset everything to beginning
+  await new Promise(r => setTimeout(r, 2000));
+
   const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
   if (tab?.id){
-    const response = await chrome.tabs.sendMessage(tab.id, {
-      type: "RESET_PAGE",
+    const response = chrome.tabs.sendMessage(tab.id, {
+      type: "RESET_PAGE_CONTENT",
       source: "background"
     });
     console.log(response);
   }
+
   tabState = {
     tabID: tab.id,
     status: 'Idle',
     results: [],
     startedAt: null
   }
-  
-  // reset popup
 
+  await chrome.runtime.sendMessage({status: "Idle"});
   chrome.action.setBadgeText({text: ""});
 }
 
 async function call_to_scan_again(){
-  // ask to scan again
   const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
   if (tab?.id){
     const response = await chrome.tabs.sendMessage(tab.id, {
@@ -136,7 +153,7 @@ async function call_to_scan_again(){
     startedAt: null
   }
 }
-// use this for tab switching.
+
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
   const [tab] = await chrome.tabs.query({
     active: true, 
@@ -149,5 +166,4 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     results: [],
     startedAt: null
   }
-  console.log("on activate ", tabState)
 });

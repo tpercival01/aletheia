@@ -1,26 +1,21 @@
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  switch(message.type) {
-    case "RESET_PAGE":
-      console.log("RESETTING")
+  if (message.type === "RESET_PAGE_CONTENT") {
+      console.log("RESETTING");
       reset_everything();
-      
-      sendResponse({reply: "RESET DONE."});
-      return true;
-    
-    case "SCAN_AGAIN":
-      console.log("SCANNING AGAIN")
+      sendResponse({status: "RESET_DONE"});
+  }
+  else if (message.type === "SCAN_AGAIN"){
+      console.log("SCANNING AGAIN");
       scrapeInitial();
-
-      sendResponse({reply: "SCANNED AGAIN"});
-      return true;
+      sendResponse({status: "COMPLETED"});
   }
 });
 
 // Create sets to keep track of media
 // Create arrays for eventual payload to send to background.js
-const processedImages = new Set();
-const processedTexts = new Set();
-const processedIframes = new Set();
+let processedImages = new Set();
+let processedTexts = new Set();
+let processedIframes = new Set();
 
 let payloadImages = [];
 let payloadTexts = [];
@@ -161,7 +156,7 @@ async function send_payload(){
     });
     console.log("received ", response)
     const processed_payload = response;
-    //highlight_elements(processed_payload);
+    highlight_elements(processed_payload);
   } catch (error) {
       console.log(error);
   }
@@ -171,13 +166,13 @@ function highlight_elements(payload){
   for (const item of payload){
     let temp = document.evaluate(item.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
     if (item.confidence > 0.8){
-      temp.style.setProperty("box-shadow", "inset 0 0 10px #0f0", "important");
+      temp.style.setProperty("box-shadow", "inset 0 0 10px #eb4034", "important");
       temp.style.setProperty("border-radius", "1.25em", "important")
     } else if (item.confidence > 0.5){
-      temp.style.setProperty("border", "2px solid #4CAF50", "important");
+      temp.style.setProperty("box-shadow", "2px solid #ffbf00", "important");
       temp.style.setProperty("border-radius", "1.25em", "important")
     } else {
-      temp.style.setProperty("border", "2px solid #4CAF50", "important");
+      temp.style.setProperty("box-shadow", "inset 0 0 10px #0f0", "important");
       temp.style.setProperty("border-radius", "1.25em", "important")
     }
   }
@@ -186,15 +181,15 @@ function highlight_elements(payload){
 if (document.readyState === 'interactive' || document.readyState === 'complete') {
   scrapeInitial();
 } else {
-  window.addEventListener('DOMContentLoaded', setup);
+  window.addEventListener('DOMContentLoaded', scrapeInitial);
 }
 
-function reset_everything(){
-  for (const item of payload){
-    let temp = document.evaluate(item.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-    temp.style.removeProperty("box-shadow");
-    temp.style.removeProperty("border-radius");
-  }
+async function reset_everything(){
+  // for (const item of payload){
+  //   let temp = document.evaluate(item.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+  //   temp.style.removeProperty("box-shadow");
+  //   temp.style.removeProperty("border-radius");
+  // }
 
   processedImages = new Set();
   processedTexts = new Set();

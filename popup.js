@@ -11,11 +11,12 @@ function updateUI(data) {
 };
 
 scanAgainButton.addEventListener("click", async () => {
-  checkPopupState();
-  scanAgainButton.classList.add("hidden");
-  resetPageButton.classList.add("hidden");
+  scanAgainButton.className = "hidden";
+  resetPageButton.className = "hidden";
+
   try {
-    await chrome.runtime.sendMessage({ type: "SCAN_AGAIN", source: "popup" });
+    const response = await chrome.runtime.sendMessage({ type: "SCAN_AGAIN", source: "popup" });
+    updateUI(response);
   } catch (error) {
     console.error("Error sending SCAN_AGAIN message: ", error);
     updateUI({ status: "Error" });
@@ -23,11 +24,12 @@ scanAgainButton.addEventListener("click", async () => {
 });
 
 resetPageButton.addEventListener("click", async () => {
-  checkPopupState();
-  scanAgainButton.classList.add("hidden");
-  resetPageButton.classList.add("hidden");
+  scanAgainButton.className = "hidden";
+  resetPageButton.className = "hidden";
+
   try {
-    await chrome.runtime.sendMessage({ type: "RESET_PAGE", source: "popup" });
+    const response = await chrome.runtime.sendMessage({ type: "RESET_PAGE_POPUP", source: "popup" });
+    updateUI(response);
   } catch (error) {
     console.error("Error sending RESET_PAGE message: ", error);
     updateUI({ status: "Error" });
@@ -52,8 +54,8 @@ function checkPopupState() {
 
           case "Completed":
             updateUI(response);
-            scanAgainButton.classList.remove("hidden");
-            resetPageButton.classList.remove("hidden");
+            scanAgainButton.className = "";
+            resetPageButton.className = "";
             break;
             
           case "Processing":
@@ -62,6 +64,8 @@ function checkPopupState() {
           
           case "Idle":
             updateUI(response);
+            scanAgainButton.className = "";
+            resetPageButton.className = "";
             break;
         }
       }
@@ -71,4 +75,15 @@ function checkPopupState() {
 
 document.addEventListener("DOMContentLoaded", () => {
   checkPopupState();
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message){
+    if (message.status == "Completed"){
+      checkPopupState();
+    }
+    else if (message.status == "Idle"){
+      checkPopupState();
+    }
+  }
 });
