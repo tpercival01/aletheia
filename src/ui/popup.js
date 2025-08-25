@@ -10,37 +10,37 @@ function updateUI(data) {
   statusMessage.innerHTML = `Status: ${data.status || "Idle"}`;
 }
 
-scanAgainButton.addEventListener("click", async () => {
-  scanAgainButton.className = "hidden";
-  resetPageButton.className = "hidden";
+// scanAgainButton.addEventListener("click", async () => {
+//   scanAgainButton.className = "hidden";
+//   resetPageButton.className = "hidden";
 
-  try {
-    const response = await chrome.runtime.sendMessage({
-      type: "SCAN_AGAIN",
-      source: "popup",
-    });
-    updateUI(response);
-  } catch (error) {
-    console.error("Error sending SCAN_AGAIN message: ", error);
-    updateUI({ status: "Error" });
-  }
-});
+//   try {
+//     const response = await chrome.runtime.sendMessage({
+//       type: "SCAN_AGAIN",
+//       source: "popup",
+//     });
+//     updateUI(response);
+//   } catch (error) {
+//     console.error("Error sending SCAN_AGAIN message: ", error);
+//     updateUI({ status: "Error" });
+//   }
+// });
 
-resetPageButton.addEventListener("click", async () => {
-  scanAgainButton.className = "hidden";
-  resetPageButton.className = "hidden";
+// resetPageButton.addEventListener("click", async () => {
+//   scanAgainButton.className = "hidden";
+//   resetPageButton.className = "hidden";
 
-  try {
-    const response = await chrome.runtime.sendMessage({
-      type: "RESET_PAGE_POPUP",
-      source: "popup",
-    });
-    updateUI(response);
-  } catch (error) {
-    console.error("Error sending RESET_PAGE message: ", error);
-    updateUI({ status: "Error" });
-  }
-});
+//   try {
+//     const response = await chrome.runtime.sendMessage({
+//       type: "RESET_PAGE_POPUP",
+//       source: "popup",
+//     });
+//     updateUI(response);
+//   } catch (error) {
+//     console.error("Error sending RESET_PAGE message: ", error);
+//     updateUI({ status: "Error" });
+//   }
+// });
 
 function checkPopupState() {
   chrome.runtime.sendMessage(
@@ -95,15 +95,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 });
-
-async function run() {
-  const classifier = await window.transformers.pipeline(
-    "text-classification",
-    chrome.runtime.getURL("model/") // folder with config.json, model.safetensors, tokenizer.json
-  );
-
-  const result = await classifier("Hello world");
-  console.log("Prediction:", result);
-}
-
-run();
