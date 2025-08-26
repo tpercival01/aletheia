@@ -7,40 +7,41 @@ const resultsBreakdown = document.getElementById("results_breakdown");
 const resultsList = document.getElementById("results_list");
 
 function updateUI(data) {
-  statusMessage.innerHTML = `Status: ${data.status || "Idle"}`;
+  statusMessage.innerHTML = `Status: ${data.status}`;
+  console.log(statusMessage.innerHTML)
 }
 
-// scanAgainButton.addEventListener("click", async () => {
-//   scanAgainButton.className = "hidden";
-//   resetPageButton.className = "hidden";
+scanAgainButton.addEventListener("click", async () => {
+  scanAgainButton.className = "hidden";
+  resetPageButton.className = "hidden";
 
-//   try {
-//     const response = await chrome.runtime.sendMessage({
-//       type: "SCAN_AGAIN",
-//       source: "popup",
-//     });
-//     updateUI(response);
-//   } catch (error) {
-//     console.error("Error sending SCAN_AGAIN message: ", error);
-//     updateUI({ status: "Error" });
-//   }
-// });
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "SCAN_AGAIN",
+      source: "popup",
+    });
+    updateUI(response);
+  } catch (error) {
+    console.error("Error sending SCAN_AGAIN message: ", error);
+    updateUI({ status: "Error" });
+  }
+});
 
-// resetPageButton.addEventListener("click", async () => {
-//   scanAgainButton.className = "hidden";
-//   resetPageButton.className = "hidden";
+resetPageButton.addEventListener("click", async () => {
+  scanAgainButton.className = "hidden";
+  resetPageButton.className = "hidden";
 
-//   try {
-//     const response = await chrome.runtime.sendMessage({
-//       type: "RESET_PAGE_POPUP",
-//       source: "popup",
-//     });
-//     updateUI(response);
-//   } catch (error) {
-//     console.error("Error sending RESET_PAGE message: ", error);
-//     updateUI({ status: "Error" });
-//   }
-// });
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "RESET_PAGE_POPUP",
+      source: "popup",
+    });
+    updateUI(response);
+  } catch (error) {
+    console.error("Error sending RESET_PAGE message: ", error);
+    updateUI({ status: "Error" });
+  }
+});
 
 function checkPopupState() {
   chrome.runtime.sendMessage(
@@ -82,7 +83,7 @@ function checkPopupState() {
   );
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", () => {
   checkPopupState();
 });
 

@@ -12,10 +12,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Create sets to keep track of media
 // Create arrays for eventual payload to send to background.js
-let processedImages = new Set();
-let processedTexts = new Set();
-let processedIframes = new Set();
-
 let payloadImages = [];
 let payloadTexts = [];
 let payloadIframes = [];
@@ -41,24 +37,32 @@ function process_images(images) {
 }
 
 function process_texts(texts) {
-  const text_arr = Array.from(texts);
+  const whitespace_regex = /\s+/g;
+  const exclude = [
+    'header', 'nav', 'footer', 'aside', 'button', '[role=banner]', '[role=navigation]'
+  ].join(',');
+  const seen = new Set();
+  const out = [];
 
-  for (let j = 0; j < text_arr.length; j++) {
-    let text = text_arr[j];
-
-    let xpath_ = generate_xpath(text);
-
-    let processed_text = {
-      id: j,
-      type: "text",
-      xpath: xpath_,
-      text: text.innerHTML,
-    };
-
-    processedTexts.add(processed_text);
+  for (let j = 0; j < texts.length; j++) {
+    if (texts[j].closest(exclude)) continue;
+    const raw_text = texts[j].innerText || texts[j].textContent;
+    const txt = raw_text.replace(whitespace_regex, ' ').trim();
+    if (txt && !seen.has(txt)){
+      seen.add(txt);
+      let xpath_ = generate_xpath(texts[j]);
+      let processed_text = {
+        id: j,
+        type: "text",
+        xpath: xpath_,
+        text: txt,
+      };
+      
+      out.push(processed_text);
+    }
   }
 
-  payloadTexts = Array.from(processedTexts);
+  payloadTexts = out;
 }
 
 function process_videos(videos) {}
@@ -102,33 +106,23 @@ function generate_xpath(element) {
 function scrapeInitial() {
   // Images
   let images = document.querySelectorAll("img");
-  process_images(images);
+  //process_images(images);
 
   // Text
   const text_selectors =
-    "p, h1, h2, h3, h4, h5, h6, div, span, a, li, td, th, label, button";
+    "p, h1, h2, h3, h4, h5, h6, li, td, th";
   const all_raw_text_elements = document.querySelectorAll(text_selectors);
-  const text_elements = new Set();
+  process_texts(all_raw_text_elements);
 
-  all_raw_text_elements.forEach((element) => {
-    const tagName = element.tagName.toUpperCase();
-    if (tagName === "SCRIPT" || tagName === "STYLE") {
-      return;
-    }
+  console.log(payloadTexts);
 
-    if (element.textContent.trim().length > 0) {
-      text_elements.add(element);
-    }
-  });
-
-  process_texts(text_elements);
   let videos = document.querySelectorAll("video");
 
   let audios = document.querySelectorAll("audio");
 
   let iframes = document.querySelectorAll("iframe");
 
-  send_payload();
+  //send_payload();
 }
 
 async function send_payload() {
@@ -185,9 +179,11 @@ if (
   document.readyState === "interactive" ||
   document.readyState === "complete"
 ) {
-  scrapeInitial();
+  //scrapeInitial();
+  console.log("loaded on start");
 } else {
-  window.addEventListener("DOMContentLoaded", scrapeInitial);
+  console.log("loaded after loading fully")
+  //window.addEventListener("DOMContentLoaded", scrapeInitial);
 }
 
 async function reset_everything() {

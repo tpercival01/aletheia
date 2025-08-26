@@ -5,25 +5,25 @@
     "description": "Detect AI generated content",
     "action": {
       "default_icon": {
-        "128": "icons/LOGO_128.png"
+        "128": "src/icons/LOGO_128.png"
       },
-      "default_popup": "popup.html",
+      "default_popup": "src/ui/popup.html",
       "default_title": "Open Aletheia"
     },
     "icons": {
-        "16": "icons/LOGO_16.png",
-        "48": "icons/LOGO_48.png",
-        "128": "icons/LOGO_128.png"
+        "16": "src/icons/LOGO_16.png",
+        "48": "src/icons/LOGO_48.png",
+        "128": "src/icons/LOGO_128.png"
     },
     "permissions": ["activeTab", "scripting", "storage", "downloads", "tabs"],
     "host_permissions": ["<all_urls>"],
     "background": {
-        "service_worker": "background.js"
+        "service_worker": "src/ui/background.js"
     },
     "content_scripts": [
         {
             "matches": ["<all_urls>"],
-            "js": ["content.js"],
+            "js": ["src/ui/content.js"],
             "run_at": "document_start"
         }
     ],
