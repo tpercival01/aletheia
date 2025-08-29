@@ -10,30 +10,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Create sets to keep track of media
-// Create arrays for eventual payload to send to background.js
 let payloadImages = [];
 let payloadTexts = [];
-let payloadIframes = [];
 
 function process_images(images) {
+  const seen = new Set();
   for (let i = 0; i < images.length; i++) {
-    let image = images[i];
+    const image = images[i];
     if (image.width > 30 && image.height > 30) {
-      if (image.src && !processedImages.has(image)) {
+      if (image.src && !seen.has(image.src)) {
         let xpath_ = generate_xpath(image);
-
-        let temp_image = {
+        seen.add(image.src)
+        let processed_image = {
           alt: image.alt,
           src: image.src,
           xpath: xpath_,
         };
-        processedImages.add(temp_image);
+        payloadImages.push(processed_image);
       }
     }
   }
-
-  payloadImages = Array.from(processedImages);
 }
 
 function process_texts(texts) {
@@ -42,7 +38,6 @@ function process_texts(texts) {
     'header', 'nav', 'footer', 'aside', 'button', '[role=banner]', '[role=navigation]'
   ].join(',');
   const seen = new Set();
-  const out = [];
 
   for (let j = 0; j < texts.length; j++) {
     if (texts[j].closest(exclude)) continue;
@@ -58,11 +53,9 @@ function process_texts(texts) {
         text: txt,
       };
       
-      out.push(processed_text);
+      payloadTexts.push(processed_text);
     }
   }
-
-  payloadTexts = out;
 }
 
 function process_videos(videos) {}
@@ -122,11 +115,11 @@ function scrapeInitial() {
 
   let iframes = document.querySelectorAll("iframe");
 
-  //send_payload();
+  send_payload();
 }
 
 async function send_payload() {
-  console.log("send message content");
+  console.log("sent payload");
   try {
     const response = await chrome.runtime.sendMessage({
       type: "PROCESS",
@@ -150,28 +143,39 @@ async function send_payload() {
 }
 
 function highlight_elements(payload) {
-  for (const item of payload) {
-    let temp = document.evaluate(
-      item.xpath,
-      document,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
-    if (item.confidence > 0.8) {
-      temp.style.setProperty(
-        "box-shadow",
-        "inset 0 0 10px #eb4034",
-        "important"
-      );
-      temp.style.setProperty("border-radius", "1.25em", "important");
-    } else if (item.confidence > 0.5) {
-      temp.style.setProperty("box-shadow", "2px solid #ffbf00", "important");
-      temp.style.setProperty("border-radius", "1.25em", "important");
-    } else {
-      temp.style.setProperty("box-shadow", "inset 0 0 10px #0f0", "important");
-      temp.style.setProperty("border-radius", "1.25em", "important");
-    }
+  if (payload["text"]){
+    console.log("text here", payload.text);
+    // navigate the xpath backwards to the first div or span, hihglight that element.
+    const test = document.evaluate(payload.text.data[0].xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    console.log(test.closest("div"));
+    const temp = test.closest("div");
+    temp.style.setProperty("border", "2px solid #ffbf00", "important");
+    temp.style.setProperty("border-radius", "1.25em", "important");
+  } else if (payload["images"]){
+    console.log("images. no images.")
+  //   for (const item of payload) {
+  //     let temp = document.evaluate(
+  //       item.xpath,
+  //       document,
+  //       null,
+  //       XPathResult.FIRST_ORDERED_NODE_TYPE,
+  //       null
+  //     ).singleNodeValue;
+  //     if (item.confidence > 0.8) {
+  //       temp.style.setProperty(
+  //         "box-shadow",
+  //         "inset 0 0 10px #eb4034",
+  //         "important"
+  //       );
+  //       temp.style.setProperty("border-radius", "1.25em", "important");
+  //     } else if (item.confidence > 0.5) {
+  //       temp.style.setProperty("box-shadow", "2px solid #ffbf00", "important");
+  //       temp.style.setProperty("border-radius", "1.25em", "important");
+  //     } else {
+  //       temp.style.setProperty("box-shadow", "inset 0 0 10px #0f0", "important");
+  //       temp.style.setProperty("border-radius", "1.25em", "important");
+  //     }
+  //   }
   }
 }
 
@@ -179,11 +183,11 @@ if (
   document.readyState === "interactive" ||
   document.readyState === "complete"
 ) {
-  //scrapeInitial();
+  scrapeInitial();
   console.log("loaded on start");
 } else {
   console.log("loaded after loading fully")
-  //window.addEventListener("DOMContentLoaded", scrapeInitial);
+  window.addEventListener("DOMContentLoaded", scrapeInitial);
 }
 
 async function reset_everything() {
@@ -192,10 +196,6 @@ async function reset_everything() {
   //   temp.style.removeProperty("box-shadow");
   //   temp.style.removeProperty("border-radius");
   // }
-
-  processedImages = new Set();
-  processedTexts = new Set();
-  processedIframes = new Set();
 
   payloadImages = [];
   payloadTexts = [];
