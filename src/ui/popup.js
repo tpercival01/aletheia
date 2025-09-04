@@ -7,6 +7,7 @@ const resultsBreakdown = document.getElementById("results_breakdown");
 const resultsList = document.getElementById("results_list");
 
 function updateUI(data) {
+  console.log(data);
   statusMessage.innerHTML = `Status: ${data.status}`;
   console.log(statusMessage.innerHTML)
 }
@@ -20,11 +21,14 @@ scanAgainButton.addEventListener("click", async () => {
       type: "SCAN_AGAIN",
       source: "popup",
     });
+    console.log("SCANNED AGAIN")
     updateUI(response);
   } catch (error) {
     console.error("Error sending SCAN_AGAIN message: ", error);
     updateUI({ status: "Error" });
   }
+
+  checkPopupState();
 });
 
 resetPageButton.addEventListener("click", async () => {
@@ -41,6 +45,8 @@ resetPageButton.addEventListener("click", async () => {
     console.error("Error sending RESET_PAGE message: ", error);
     updateUI({ status: "Error" });
   }
+
+  checkPopupState();
 });
 
 function checkPopupState() {
@@ -89,9 +95,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message) {
-    if (message.status == "Completed") {
-      checkPopupState();
-    } else if (message.status == "Idle") {
+    if (message.status == "Completed" || message.status == "Idle") {
       checkPopupState();
     }
   }

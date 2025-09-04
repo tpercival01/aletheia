@@ -1,3 +1,11 @@
+window.addEventListener("DOMContentLoaded", () => {
+  console.log("Page loaded")
+  setTimeout(() => {
+    console.log("Timeout finished")
+    scrapeInitial();
+  }, 5000);
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "RESET_PAGE_CONTENT") {
     console.log("RESETTING");
@@ -12,7 +20,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 let payloadImages = [];
 let payloadTexts = [];
+let payloadIframes = [];
+let payloadVideos = [];
 
+/* 
+  IMAGES
+  Scrape and Clean
+  DONE
+*/
 function process_images(images) {
   const seen = new Set();
   for (let i = 0; i < images.length; i++) {
@@ -32,35 +47,99 @@ function process_images(images) {
   }
 }
 
-function process_texts(texts) {
-  const whitespace_regex = /\s+/g;
-  const exclude = [
-    'header', 'nav', 'footer', 'aside', 'button', '[role=banner]', '[role=navigation]'
+/* 
+  TEXT
+  Scrape and Clean
+  DONE
+*/
+function process_text() {
+  payloadTexts = [];
+  const EXCLUDE_SELECTORS = [
+    'header', 'nav', 'footer', 'aside', 'script', 'style', 'noscript', 'button',
+    'meta', 'title', 'link', 'path',
+    '[role=banner]', '[role=navigation]', '[role=complementary]', 
+    '[role=menubar]', '[role=menu]', '[aria-hidden=true]',
+    '.nav', '.navbar', '.menu', '.header', '.footer', '.sidebar', 
+    '.cookie', '.popup', '.modal', '.ad', '.advertisement'
   ].join(',');
-  const seen = new Set();
 
-  for (let j = 0; j < texts.length; j++) {
-    if (texts[j].closest(exclude)) continue;
-    const raw_text = texts[j].innerText || texts[j].textContent;
-    const txt = raw_text.replace(whitespace_regex, ' ').trim();
-    if (txt && !seen.has(txt)){
-      seen.add(txt);
-      let xpath_ = generate_xpath(texts[j]);
-      let processed_text = {
-        id: j,
-        type: "text",
-        xpath: xpath_,
-        text: txt,
-      };
-      
-      payloadTexts.push(processed_text);
+  const TEXT_BLACKLIST = [
+    'promoted', 'click here', 'read more', 'share', 'login', 'sign in', 
+    'submit', 'privacy policy', 'user agreement', 'all rights reserved', 
+    'learn more', 't&cs apply', 'terms and conditions'
+  ];
+
+  const elements = Array.from(document.querySelectorAll('*')).filter(el => {
+    if (el.matches(EXCLUDE_SELECTORS)) return false;
+    if (el.closest(EXCLUDE_SELECTORS)) return false;
+    return true;
+  });
+
+  const duplicate_set = new Set();
+  const indexMap = new Map();
+  payloadTexts.length = 0;
+
+  elements.forEach(el => {
+    const text = (el.innerText || el.textContent || "").replace(/\s+/g, ' ').trim();
+    if (!text) return;
+
+    const words = text.split(" ");
+    if (words.length < 10) return;
+
+    if (TEXT_BLACKLIST.some(pattern => text.toLowerCase().includes(pattern))) return;
+
+    if (text === text.toUpperCase()) return;
+
+    const xpath = generate_xpath(el);
+    let shouldAdd = true;
+    const toRemove = [];
+    
+    for (let existing of duplicate_set){
+      if (xpath.startsWith(existing)){
+        toRemove.push(existing);
+      } else if (existing.startsWith(xpath)){
+        shouldAdd = false;
+        break;
+      }
     }
-  }
+
+    toRemove.forEach(oldPath => {
+      duplicate_set.delete(oldPath);
+      const idx = indexMap.get(oldPath);
+      if (idx !== undefined){
+        payloadTexts.splice(idx, 1);
+        indexMap.delete(oldPath);
+        for (let [p,i] of indexMap){
+          if (i > idx) indexMap.set(p, i - 1);
+        }
+      }
+    });
+
+    if (shouldAdd){
+      duplicate_set.add(xpath);
+      const newIndex = payloadTexts.length;
+      payloadTexts.push({text, xpath});
+      indexMap.set(xpath, newIndex);
+    }
+  });
+
+
+  console.log(payloadTexts);
 }
 
+/* 
+  VIDEO
+  Scrape and Clean
+  DONE
+*/
 function process_videos(videos) {}
 
-function process_iframes(iframes) {}
+/* 
+  AUDIO
+  Scrape and Clean
+  DONE
+*/
+function process_audio(audio) {}
 
 function generate_xpath(element) {
   if (!element || element.nodeType !== Node.ELEMENT_NODE) {
@@ -96,26 +175,31 @@ function generate_xpath(element) {
   return pathParts.length > 0 ? "/" + pathParts.join("/") : "";
 }
 
+/*
+
+SCRAPE HTML ELEMENTS:
+
+TEXT: DONE
+IMAGES: NOT DONE
+VIDEO: NOT DONE
+AUDIO: NOT DONE
+
+*/
+
 function scrapeInitial() {
-  // Images
-  let images = document.querySelectorAll("img");
+  // IMAGES
   //process_images(images);
 
-  // Text
-  const text_selectors =
-    "p, h1, h2, h3, h4, h5, h6, li, td, th";
-  const all_raw_text_elements = document.querySelectorAll(text_selectors);
-  process_texts(all_raw_text_elements);
+  // TEXT
+  //process_text();
 
-  console.log(payloadTexts);
+  // VIDEO
+  // process_video(video);
 
-  let videos = document.querySelectorAll("video");
+  // AUDIO
+  // process_audio(audio);
 
-  let audios = document.querySelectorAll("audio");
-
-  let iframes = document.querySelectorAll("iframe");
-
-  send_payload();
+  //send_payload();
 }
 
 async function send_payload() {
@@ -135,22 +219,38 @@ async function send_payload() {
       },
     });
     console.log("received ", response);
+
     const processed_payload = response;
+    payloadTexts = processed_payload["text"];
     highlight_elements(processed_payload);
+
   } catch (error) {
     console.log(error);
   }
 }
 
+/*
+HIGHLIGHTING ELEMENTS:
+
+Text: DONE
+Images: NOT DONE
+Video: NOT DONE
+Audio: NOT DONE
+
+*/
 function highlight_elements(payload) {
   if (payload["text"]){
-    console.log("text here", payload.text);
-    // navigate the xpath backwards to the first div or span, hihglight that element.
-    const test = document.evaluate(payload.text.data[0].xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-    console.log(test.closest("div"));
-    const temp = test.closest("div");
-    temp.style.setProperty("border", "2px solid #ffbf00", "important");
-    temp.style.setProperty("border-radius", "1.25em", "important");
+    for (const chunk of payload.text.data){
+      const el = document.evaluate(chunk.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      if (chunk.confidence > 0.8){
+        el.style.setProperty("border", "5px solid red", "important");
+      } else if (chunk.confidence > 0.5){
+        el.style.setProperty("border", "5px solid yellow", "important");
+      } else {
+        el.style.setProperty("border", "5px solid green", "important");
+      }
+    }
+    
   } else if (payload["images"]){
     console.log("images. no images.")
   //   for (const item of payload) {
@@ -179,25 +279,25 @@ function highlight_elements(payload) {
   }
 }
 
-if (
-  document.readyState === "interactive" ||
-  document.readyState === "complete"
-) {
-  scrapeInitial();
-  console.log("loaded on start");
-} else {
-  console.log("loaded after loading fully")
-  window.addEventListener("DOMContentLoaded", scrapeInitial);
-}
-
 async function reset_everything() {
-  // for (const item of payload){
-  //   let temp = document.evaluate(item.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-  //   temp.style.removeProperty("box-shadow");
-  //   temp.style.removeProperty("border-radius");
-  // }
 
+ // TEXT
+  for (const chunk of payloadTexts.data){
+    chunk.elements_xpaths.forEach(xpath => {
+      const el = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      el.style.removeProperty("border");
+    })
+  }
+
+  // IMAGES
+
+  // VIDEOS
+
+  // AUDIO
+
+  // reset all payloads
   payloadImages = [];
   payloadTexts = [];
   payloadIframes = [];
+  payloadVideos = [];
 }

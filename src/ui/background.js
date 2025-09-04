@@ -1,3 +1,4 @@
+
 let tabState = {
   tabID: null,
   status: "Idle",
@@ -39,6 +40,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         results: [],
         startedAt: Date.now(),
       };
+
       sendResponse(tabState);
       call_to_scan_again();
       return true;
@@ -65,18 +67,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function process_payload(payload) {
   console.log(payload)
 
+  // TEXT
+
   const processedTexts = await Promise.all(
     payload.text.data.map(async (textItem) => ({
       ...textItem,
       confidence: await analyzeText(textItem)
     }))
   )
+
+  // IMAGES
+
   // const processedImages = await Promise.all(
   //   payload.images.data.map(async (imageItem) => ({
   //     ...imageItem,
   //     confidence: await analyzeImage(imageItem)
   //   }))
   // )
+
+  // VIDEOS
+
+  // AUDIO
+  
   return {
     text: {...payload.text, data: processedTexts},
     images: {...payload.images, data: ""}
@@ -139,26 +151,14 @@ async function call_to_scan_again() {
     });
 
     console.log(response);
+
+    const popup_response = await chrome.runtime.sendMessage({status: "Completed"});
+
+    tabState = {
+      tabID: tab.id,
+      status: "Completed",
+      results: [],
+      startedAt: null,
+    };
   }
-
-  tabState = {
-    tabID: tab.id,
-    status: "Processing",
-    results: [],
-    startedAt: null,
-  };
 }
-
-chrome.tabs.onActivated.addListener(async (activeInfo) => {
-  const [tab] = await chrome.tabs.query({
-    active: true,
-    currentWindow: true,
-  });
-
-  tabState = {
-    tabID: tab.id,
-    status: "idle",
-    results: [],
-    startedAt: null,
-  };
-});
