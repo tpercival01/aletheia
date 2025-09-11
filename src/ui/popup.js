@@ -7,9 +7,7 @@ const resultsBreakdown = document.getElementById("results_breakdown");
 const resultsList = document.getElementById("results_list");
 
 function updateUI(data) {
-  console.log(data);
   statusMessage.innerHTML = `Status: ${data.status}`;
-  console.log(statusMessage.innerHTML)
 }
 
 scanAgainButton.addEventListener("click", async () => {
@@ -49,54 +47,19 @@ resetPageButton.addEventListener("click", async () => {
   checkPopupState();
 });
 
-function checkPopupState() {
-  chrome.runtime.sendMessage(
-    {
-      type: "GET_POPUP_STATE",
-      source: "popup",
-    },
-    (response) => {
-      if (chrome.runtime.lastError) {
-        console.error(
-          "Could not get initial state from background",
-          chrome.runtime.lastError
-        );
-        updateUI({ status: "Error connecting to background" });
-        return;
-      }
-      console.log(response);
-
-      if (response) {
-        switch (response.status) {
-          case "Completed":
-            updateUI(response);
-            scanAgainButton.className = "";
-            resetPageButton.className = "";
-            break;
-
-          case "Processing":
-            updateUI(response);
-            break;
-
-          case "Idle":
-            updateUI(response);
-            scanAgainButton.className = "";
-            resetPageButton.className = "";
-            break;
-        }
-      }
-    }
-  );
+function checkPopupState(stateObj) {
+  updateUI(stateObj);
+  scanAgainButton.className = "";
+  resetPageButton.className = "";
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  checkPopupState();
+window.addEventListener("DOMContentLoaded", async () => {
+  const {state} = await chrome.storage.local.get("state");
+  checkPopupState(state);
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message) {
-    if (message.status == "Completed" || message.status == "Idle") {
-      checkPopupState();
-    }
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local") {
+   checkPopupState(changes.state.newValue);
   }
 });

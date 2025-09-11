@@ -191,7 +191,7 @@ function scrapeInitial() {
   //process_images(images);
 
   // TEXT
-  //process_text();
+  process_text();
 
   // VIDEO
   // process_video(video);
@@ -199,7 +199,7 @@ function scrapeInitial() {
   // AUDIO
   // process_audio(audio);
 
-  //send_payload();
+  send_payload();
 }
 
 async function send_payload() {
@@ -279,7 +279,7 @@ function highlight_elements(payload) {
   }
 }
 
-async function reset_everything() {
+function reset_everything() {
 
  // TEXT
   for (const chunk of payloadTexts.data){

@@ -1,10 +1,9 @@
-
 let tabState = {
   tabID: null,
   status: "Idle",
-  results: [],
   startedAt: null,
 };
+chrome.storage.local.set({state: tabState});
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
@@ -13,9 +12,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       tabState = {
         tabID: tabState.tabID,
         status: "Processing",
-        results: message.payload,
         startedAt: Date.now(),
       };
+      chrome.storage.local.set({state: tabState});
 
       (async function runProcess() {
         try {
@@ -23,6 +22,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           sendResponse(payload);
 
           tabState.status = "Completed";
+          chrome.storage.local.set({state: tabState});
           change_popup("Completed");
         } catch (err) {
           console.error("error ", err);
@@ -37,9 +37,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       tabState = {
         tabID: tabState.tabID,
         status: "Processing",
-        results: [],
         startedAt: Date.now(),
       };
+      chrome.storage.local.set({state: tabState});
 
       sendResponse(tabState);
       call_to_scan_again();
@@ -50,9 +50,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       tabState = {
         tabID: tabState.tabID,
         status: "Resetting",
-        results: [],
         startedAt: Date.now(),
       };
+      chrome.storage.local.set({state: tabState});
+
       sendResponse(tabState);
       call_to_reset();
       return true;
@@ -134,9 +135,10 @@ async function call_to_reset() {
   tabState = {
     tabID: tab.id,
     status: "Idle",
-    results: [],
     startedAt: null,
   };
+  chrome.storage.local.set({state: tabState});
+
 
   await chrome.runtime.sendMessage({ status: "Idle" });
   chrome.action.setBadgeText({ text: "" });
@@ -157,8 +159,9 @@ async function call_to_scan_again() {
     tabState = {
       tabID: tab.id,
       status: "Completed",
-      results: [],
       startedAt: null,
     };
+    chrome.storage.local.set({state: tabState});
+
   }
 }
