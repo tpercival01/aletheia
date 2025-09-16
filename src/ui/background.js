@@ -1,6 +1,6 @@
 let tabState = {
   tabID: null,
-  status: "Idle",
+  status: "Ready to scan!",
   startedAt: null,
 };
 chrome.storage.local.set({state: tabState});
@@ -134,13 +134,13 @@ async function call_to_reset() {
 
   tabState = {
     tabID: tab.id,
-    status: "Idle",
+    status: "Ready to scan!",
     startedAt: null,
   };
   chrome.storage.local.set({state: tabState});
 
 
-  await chrome.runtime.sendMessage({ status: "Idle" });
+  await chrome.runtime.sendMessage({ status: "Ready to scan!" });
   chrome.action.setBadgeText({ text: "" });
 }
 

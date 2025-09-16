@@ -14,13 +14,33 @@
 
       <main>
         <div id="status_message" class="status--idle">Status: </div>
-        <section id="results_breakdown" class="hidden">
+        <section id="results_breakdown" class="">
+          <div>
+            <h3>Results summary:</h3>
+          </div>
         </section>
-        <div class="button-group">
+        <div id="button_group_one">
           <button id="scan_again" class="hidden">Scan Page</button>
           <button id="reset_button" class="hidden">Reset Highlights</button>
         </div>
-        <div><a href="">Educational website</a></div>
+
+        <div class="dropdown">
+          <button class="dropdown_toggle" aria-haspopup="true" aria-expanded="false" aria-controls="dropdown_menu">
+            Export report
+          </button>
+          <ul id="dropdown_menu" class="dropdown_menu" role="menu" aria-labelledby="dropdown_toggle">
+            <li>
+              <button role="menuitem" id="send_report">Send report to website</button>
+            </li>
+            <li >
+              <button role="menuitem" id="download_report">Download report</button>
+            </li>
+          </ul>
+        </div>
+
+        <div class="website_link_div">
+          <a href="" id="website_link">Learn more with Aletheia Education!</a>
+        </div>
       </main>
 
       <footer class="footer">

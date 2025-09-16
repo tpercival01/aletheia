@@ -246,8 +246,6 @@ function highlight_elements(payload) {
         el.style.setProperty("border", "5px solid red", "important");
       } else if (chunk.confidence > 0.5){
         el.style.setProperty("border", "5px solid yellow", "important");
-      } else {
-        el.style.setProperty("border", "5px solid green", "important");
       }
     }
     
@@ -271,10 +269,7 @@ function highlight_elements(payload) {
   //     } else if (item.confidence > 0.5) {
   //       temp.style.setProperty("box-shadow", "2px solid #ffbf00", "important");
   //       temp.style.setProperty("border-radius", "1.25em", "important");
-  //     } else {
-  //       temp.style.setProperty("box-shadow", "inset 0 0 10px #0f0", "important");
-  //       temp.style.setProperty("border-radius", "1.25em", "important");
-  //     }
+  //     } 
   //   }
   }
 }
