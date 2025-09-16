@@ -13,10 +13,12 @@
       </header>
 
       <main>
-        <div id="status_message" class="status--idle">Status: </div>
-        <section id="results_breakdown" class="">
+        <div id="status_message" class="status-idle">Status: </div>
+        <section id="results_breakdown" class="hidden">
           <div>
             <h3>Results summary:</h3>
+            <ul id="results_list">
+            </ul>
           </div>
         </section>
         <div id="button_group_one">
@@ -24,7 +26,7 @@
           <button id="reset_button" class="hidden">Reset Highlights</button>
         </div>
 
-        <div class="dropdown">
+        <div class="dropdown hidden">
           <button class="dropdown_toggle" aria-haspopup="true" aria-expanded="false" aria-controls="dropdown_menu">
             Export report
           </button>

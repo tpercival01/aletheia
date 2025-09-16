@@ -4,16 +4,18 @@ const scanAgainButton = document.getElementById("scan_again");
 const resetPageButton = document.getElementById("reset_button");
 
 const resultsBreakdown = document.getElementById("results_breakdown");
+const resultsList = document.getElementById("results_list");
+
+const dropdown = document.querySelector('.dropdown');
+const toggle = dropdown.querySelector('.dropdown_toggle');
+const menu = dropdown.querySelector('.dropdown_menu');
+
 
 window.addEventListener("DOMContentLoaded", async () => {
   const {state} = await chrome.storage.local.get("state");
   checkPopupState(state);
 
   // Handle export menu
-  const dropdown = document.querySelector('.dropdown');
-  const toggle = dropdown.querySelector('.dropdown_toggle');
-  const menu = dropdown.querySelector('.dropdown_menu');
-
   toggle.addEventListener('click', e => {
     e.stopPropagation();
     const isOpen = dropdown.classList.toggle('open');
@@ -42,7 +44,12 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local") {
-   checkPopupState(changes.state.newValue);
+    checkPopupState(changes.state.newValue);
+    if (changes.state.newValue.status == "Completed"){
+      update_results(changes);
+      dropdown.classList.remove("hidden");
+      resultsBreakdown.classList.remove("hidden");
+   }
   }
 });
 
@@ -53,6 +60,8 @@ function updateUI(data) {
 scanAgainButton.addEventListener("click", async () => {
   scanAgainButton.className = "hidden";
   resetPageButton.className = "hidden";
+  resultsBreakdown.classList.add("hidden");
+  dropdown.classList.add("hidden");
 
   try {
     const response = await chrome.runtime.sendMessage({
@@ -65,13 +74,13 @@ scanAgainButton.addEventListener("click", async () => {
     console.error("Error sending SCAN_AGAIN message: ", error);
     updateUI({ status: "Error" });
   }
-
-  checkPopupState();
 });
 
 resetPageButton.addEventListener("click", async () => {
   scanAgainButton.className = "hidden";
   resetPageButton.className = "hidden";
+  resultsBreakdown.classList.add("hidden");
+  dropdown.classList.add("hidden");
 
   try {
     const response = await chrome.runtime.sendMessage({
@@ -83,14 +92,18 @@ resetPageButton.addEventListener("click", async () => {
     console.error("Error sending RESET_PAGE message: ", error);
     updateUI({ status: "Error" });
   }
-
-  checkPopupState();
 });
 
 function checkPopupState(stateObj) {
   updateUI(stateObj);
   scanAgainButton.className = "";
   resetPageButton.className = "";
+}
+
+function update_results(changes){
+  const listItem = document.createElement("li");
+  listItem.innerHTML = `${changes.state.newValue.aiCount} elements are 90% likely to be AI`
+  resultsList.appendChild(listItem);
 }
 
 function send_report_website(){

@@ -90,18 +90,18 @@ h1 {
 }
 
 /* --- Status States --- */
-.status--idle {
+.status-idle {
   border-left-color: var(--font-secondary);
 }
-.status--processing {
+.status-processing {
   border-left-color: var(--brand-royal-blue);
   animation: pulse-border 2s infinite;
 }
-.status--success {
+.status-success {
   border-left-color: var(--success-color);
   background-color: rgba(158, 206, 106, 0.05);
 }
-.status--warning {
+.status-warning {
   border-left-color: var(--warning-color);
   background-color: rgba(224, 175, 104, 0.05);
 }
@@ -110,9 +110,9 @@ h1 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 24px;
+  margin-top: 25px;
   border-top: 1px dotted var(--border-color);
-  padding-top: 16px;
+  padding-top: 30px;
 }
 
 button {
@@ -155,6 +155,12 @@ button:hover {
   margin-top: 24px;
   border-top: 1px dotted var(--border-color);
   padding-top: 16px;
+}
+
+#results_list {
+  margin-top: 10px;
+  position: relative;
+  left: 30px;
 }
 
 .dropdown {

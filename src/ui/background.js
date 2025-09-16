@@ -2,7 +2,9 @@ let tabState = {
   tabID: null,
   status: "Ready to scan!",
   startedAt: null,
+  aiCount: 0
 };
+
 chrome.storage.local.set({state: tabState});
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -13,6 +15,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         tabID: tabState.tabID,
         status: "Processing",
         startedAt: Date.now(),
+        aiCount: 0
       };
       chrome.storage.local.set({state: tabState});
 
@@ -22,6 +25,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           sendResponse(payload);
 
           tabState.status = "Completed";
+          tabState.aiCount = payload.aiCount;
           chrome.storage.local.set({state: tabState});
           change_popup("Completed");
         } catch (err) {
@@ -77,6 +81,13 @@ async function process_payload(payload) {
     }))
   )
 
+  let positive_AI = 0;
+  processedTexts.forEach((item) => {
+    if (item.confidence > 0.9){
+      positive_AI += 1;
+    }
+  })
+
   // IMAGES
 
   // const processedImages = await Promise.all(
@@ -92,7 +103,8 @@ async function process_payload(payload) {
   
   return {
     text: {...payload.text, data: processedTexts},
-    images: {...payload.images, data: ""}
+    images: {...payload.images, data: ""},
+    aiCount: positive_AI
   }
 }
 
