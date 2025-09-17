@@ -277,11 +277,9 @@ function highlight_elements(payload) {
 function reset_everything() {
 
  // TEXT
-  for (const chunk of payloadTexts.data){
-    chunk.elements_xpaths.forEach(xpath => {
-      const el = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-      el.style.removeProperty("border");
-    })
+  for (const item of payloadTexts.data){
+    const el = document.evaluate(item.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    el.style.setProperty("border", "none", "important");
   }
 
   // IMAGES

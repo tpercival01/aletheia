@@ -133,15 +133,13 @@ function change_popup(process) {
 }
 
 async function call_to_reset() {
-  await new Promise((r) => setTimeout(r, 2000));
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.id) {
-    const response = chrome.tabs.sendMessage(tab.id, {
+    chrome.tabs.sendMessage(tab.id, {
       type: "RESET_PAGE_CONTENT",
       source: "background",
     });
-    console.log(response);
   }
 
   tabState = {
@@ -151,8 +149,6 @@ async function call_to_reset() {
   };
   chrome.storage.local.set({state: tabState});
 
-
-  await chrome.runtime.sendMessage({ status: "Ready to scan!" });
   chrome.action.setBadgeText({ text: "" });
 }
 

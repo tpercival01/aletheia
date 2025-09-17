@@ -22,18 +22,6 @@
   --transition-slow: 0.4s ease;
 }
 
-@keyframes pulse-border {
-  0% {
-    border-color: var(--brand-royal-blue);
-  }
-  50% {
-    border-color: var(--brand-royal-blue-hover);
-  }
-  100% {
-    border-color: var(--brand-royal-blue);
-  }
-}
-
 *,
 *::before,
 *::after {
@@ -58,7 +46,6 @@ body {
 header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   margin-bottom: 24px;
 }
 
@@ -86,24 +73,8 @@ h1 {
   text-align: center;
   border: 1px solid var(--border-color);
   border-left-width: 4px;
+  border-right-width: 4px;
   transition: all 0.3s ease;
-}
-
-/* --- Status States --- */
-.status-idle {
-  border-left-color: var(--font-secondary);
-}
-.status-processing {
-  border-left-color: var(--brand-royal-blue);
-  animation: pulse-border 2s infinite;
-}
-.status-success {
-  border-left-color: var(--success-color);
-  background-color: rgba(158, 206, 106, 0.05);
-}
-.status-warning {
-  border-left-color: var(--warning-color);
-  background-color: rgba(224, 175, 104, 0.05);
 }
 
 #button_group_one {
@@ -176,7 +147,7 @@ button:hover {
   border: 1px solid var(--brand-gold);
   color: var(--brand-gold);
   padding: 0.5rem 1rem;
-  font-weight: 600;
+  font-weight: 400;
   border-radius: 4px;
   cursor: pointer;
   transition: transform var(--transition-slow),
@@ -195,20 +166,20 @@ button:hover {
 
 /* move toggle left when open */
 .dropdown.open > .dropdown_toggle {
-  transform: translateX(-100px);
+  transform: translateX(-105px);
 }
 
 .dropdown_menu {
   position: absolute;
   top: -10%;
-  left: 70%;
+  left: 72%;
   transform-origin: left center;
   transform: translateY(-50%) scaleX(0);
   opacity: 0;
   transition: transform var(--transition-slow),
               opacity   var(--transition-slow);
   border-radius: var(--border-radius-medium);
-  width: 200px;
+  width: 190px;
   background-color: transparent;
   border: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
@@ -226,12 +197,12 @@ button:hover {
   display: block;
   width: 100%;
   padding: 0.5rem 1rem;
-  margin: 0.25rem 0;
+  margin: 0.5rem 0;
   background: transparent;
   color: var(--brand-gold);
   border: 1px solid var(--brand-gold);
   border-radius: 4px;
-  font-weight: 600;
+  font-weight: 400;
   text-align: center;
   cursor: pointer;
 }
@@ -247,9 +218,9 @@ button:hover {
 }
 
 .website_link_div {
-  margin-top: 35px;
+  margin-top: 30px;
   border-top: 1px dotted var(--border-color);
-  padding-top: 16px;
+  padding-top: 25px;
   text-align: center;
 }
 
@@ -270,7 +241,7 @@ button:hover {
   color: #fff;
 }
 .footer {
-  margin-top: 24px;
+  margin-top: 25px;
   text-align: center;
   font-size: 0.75rem;
   color: var(--font-secondary);
