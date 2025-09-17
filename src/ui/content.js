@@ -240,11 +240,11 @@ Audio: NOT DONE
 */
 function highlight_elements(payload) {
   if (payload["text"]){
-    for (const chunk of payload.text.data){
-      const el = document.evaluate(chunk.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-      if (chunk.confidence > 0.8){
+    for (const item of payload.text.data){
+      const el = document.evaluate(item.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      if (item.confidence > 0.8){
         el.style.setProperty("border", "5px solid red", "important");
-      } else if (chunk.confidence > 0.5){
+      } else if (item.confidence > 0.5){
         el.style.setProperty("border", "5px solid yellow", "important");
       }
     }

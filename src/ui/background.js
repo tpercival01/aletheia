@@ -2,7 +2,8 @@ let tabState = {
   tabID: null,
   status: "Ready to scan!",
   startedAt: null,
-  aiCount: 0
+  aiPosCount: 0,
+  aiSomeCount: 0
 };
 
 chrome.storage.local.set({state: tabState});
@@ -25,7 +26,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           sendResponse(payload);
 
           tabState.status = "Completed";
-          tabState.aiCount = payload.aiCount;
+          tabState.aiPosCount = payload.aiPosCount;
+          tabState.aiSomeCount = payload.aiSomeCount;
           chrome.storage.local.set({state: tabState});
           change_popup("Completed");
         } catch (err) {
@@ -82,9 +84,12 @@ async function process_payload(payload) {
   )
 
   let positive_AI = 0;
+  let somewhat_AI = 0;
   processedTexts.forEach((item) => {
     if (item.confidence > 0.9){
       positive_AI += 1;
+    } else if (item.confidence > 0.5){
+      somewhat_AI += 1;
     }
   })
 
@@ -104,12 +109,13 @@ async function process_payload(payload) {
   return {
     text: {...payload.text, data: processedTexts},
     images: {...payload.images, data: ""},
-    aiCount: positive_AI
+    aiPosCount: positive_AI,
+    aiSomeCount: somewhat_AI
   }
 }
 
 async function analyzeText(textItem){
-  return Math.random();
+  return 0.99;
 }
 
 async function analyzeImage(imageItem){
@@ -136,7 +142,7 @@ async function call_to_reset() {
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.id) {
-    chrome.tabs.sendMessage(tab.id, {
+    await chrome.tabs.sendMessage(tab.id, {
       type: "RESET_PAGE_CONTENT",
       source: "background",
     });
@@ -155,14 +161,10 @@ async function call_to_reset() {
 async function call_to_scan_again() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.id) {
-    const response = await chrome.tabs.sendMessage(tab.id, {
+    await chrome.tabs.sendMessage(tab.id, {
       type: "SCAN_AGAIN",
       source: "background",
     });
-
-    console.log(response);
-
-    const popup_response = await chrome.runtime.sendMessage({status: "Completed"});
 
     tabState = {
       tabID: tab.id,

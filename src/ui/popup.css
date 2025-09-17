@@ -231,7 +231,7 @@ button:hover {
   padding: 6px 12px;
   border-radius: var(--border-radius-medium);
   color: var(--brand-royal-blue);
-  font-weight: 600;
+  font-weight: 400;
   text-decoration: none;
   transition: all 0.2s ease;
 }
@@ -240,13 +240,34 @@ button:hover {
   background: var(--brand-royal-blue);
   color: #fff;
 }
-.footer {
-  margin-top: 25px;
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--font-secondary);
-}
 
 .hidden {
   display: none !important;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden !important;
+  width: 120px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute !important;
+  z-index: 9999 !important;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0 !important;
+  transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
 }

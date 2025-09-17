@@ -46,6 +46,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local") {
     checkPopupState(changes.state.newValue);
     if (changes.state.newValue.status == "Completed"){
+      resultsList.innerHTML = "";
       update_results(changes);
       dropdown.classList.remove("hidden");
       resultsBreakdown.classList.remove("hidden");
@@ -101,9 +102,12 @@ function checkPopupState(stateObj) {
 }
 
 function update_results(changes){
-  const listItem = document.createElement("li");
-  listItem.innerHTML = `${changes.state.newValue.aiCount} elements are 90% likely to be AI`
-  resultsList.appendChild(listItem);
+  const listItemOne = document.createElement("li");
+  listItemOne.innerHTML = `${changes.state.newValue.aiPosCount} elements are 90% likely to be AI`
+  const listItemTwo = document.createElement("li");
+  listItemTwo.innerHTML = `${changes.state.newValue.aiSomeCount} elements are 50% likely to be AI`
+  resultsList.appendChild(listItemOne);
+  resultsList.appendChild(listItemTwo);
 }
 
 function send_report_website(){
