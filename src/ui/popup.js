@@ -121,3 +121,9 @@ function download_report(){
 
   console.log("Downloading full report.")
 }
+
+
+// Open settings page
+document.getElementById('settings_button').onclick = (e) => {
+  window.location.href = chrome.runtime.getURL("src/ui/settings.html");
+}

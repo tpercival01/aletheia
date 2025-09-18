@@ -11,6 +11,7 @@
   --brand-gold: #e0af68; 
   --brand-gold-hover: #d99e46;
   --brand-gold-active: #c78f36;
+  --brand-red: #ce0808;
 
   --font-family-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
@@ -46,6 +47,7 @@ body {
 header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 24px;
 }
 
@@ -53,6 +55,11 @@ header {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
 }
 
 .logo {
@@ -83,6 +90,7 @@ h1 {
   gap: 10px;
   margin-top: 25px;
   border-top: 1px dotted var(--border-color);
+  border-bottom: 1px dotted var(--border-color);
   padding-top: 30px;
 }
 
@@ -121,7 +129,57 @@ button:hover {
   background-color: var(--brand-royal-blue-hover);
 }
 
-/* --- Results Breakdown --- */
+/* Off button */
+#off_button_container {
+  margin-top: 30px;
+  border-top: 1px dotted var(--border-color);
+  padding-top: 25px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 15px; 
+  padding: 6px 10px;
+
+  border: 1px solid var(--brand-red);
+  border-radius: var(--border-radius-medium);
+  background-color: rgba(206, 8, 8, 0.08); 
+}
+
+#off_button_container label {
+  color: var(--brand-red);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+#off_button {
+  background: transparent;
+  border: 1px solid var(--brand-red);
+  color: var(--brand-red);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 8px; 
+  border-radius: var(--border-radius-medium);
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+#off_button:hover {
+  background-color: var(--brand-red);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(206, 8, 8, 0.4);
+  transform: translateY(-2px) scale(1.05);
+}
+
+#off_button:active {
+  transform: scale(0.9);
+  background-color: #a30606;
+  border-color: #a30606;
+}
+
+/* Results Breakdown */
 #results_breakdown {
   margin-top: 24px;
   border-top: 1px dotted var(--border-color);
@@ -133,6 +191,8 @@ button:hover {
   position: relative;
   left: 30px;
 }
+
+/* Export */
 
 .dropdown {
   position: relative;
@@ -164,7 +224,6 @@ button:hover {
   background-color: var(--brand-gold-active);
 }
 
-/* move toggle left when open */
 .dropdown.open > .dropdown_toggle {
   transform: translateX(-105px);
 }
@@ -217,11 +276,13 @@ button:hover {
   color: var(--bg-primary);
 }
 
+/* Website link */
+
 .website_link_div {
+  text-align: center;
   margin-top: 30px;
   border-top: 1px dotted var(--border-color);
   padding-top: 25px;
-  text-align: center;
 }
 
 #website_link {
@@ -245,29 +306,42 @@ button:hover {
   display: none !important;
 }
 
-.tooltip {
-  position: relative;
-  display: inline-block;
+
+/*
+  Settings page CSS
+*/
+
+#settings_body {
+  width: 380px;
+  height: 350px;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auth;
+  padding: 10px;
+  justify-content: center;
 }
 
-.tooltip .tooltiptext {
-  visibility: hidden !important;
-  width: 120px;
-  background-color: #555;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 5px 0;
-  position: absolute !important;
-  z-index: 9999 !important;
-  bottom: 125%;
-  left: 50%;
-  margin-left: -60px;
-  opacity: 0 !important;
-  transition: opacity 0.3s;
+#settings_button {
+  background: transparent;
+  color: #989898;
+  font-size: 1.2rem; /* adjust cog size */
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: transform var(--transition-slow), 
+              background-color var(--transition-fast),
+              color var(--transition-fast),
+              box-shadow var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.tooltip:hover .tooltiptext {
-  visibility: visible;
-  opacity: 1;
+#settings_button:hover {
+  color: #d0d0d0;
+  transform: rotate(45deg) scale(1.15);
+}
+
+#settings_button:active {
+  transform: rotate(90deg) scale(0.95);
+  color: #989898;
 }
