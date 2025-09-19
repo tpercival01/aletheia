@@ -1,0 +1,53 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="settings.css" />
+        <link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+/>
+        <title>Thresholds</title>
+    </head>
+    <body id="threshold_body">
+        <div class="threshold_container">
+            <main>
+                <header class="settings_header">
+                    <div class="header-left">
+                        <img class="logo"/>
+                        <p id="settings_title">Threshold</p>
+                    </div>
+                    <button id="return_button">
+                        <i class="fas fa-arrow-left"></i>
+                        Return
+                    </button>
+                </header>
+                <div id="threshold_container">
+                    <div id="ai_threshold">
+                        <div class="threshold_slider_div">
+                            <label for="threshold1">
+                                <span class="bright">Human <i class="fas fa-arrow-right"></i> Uncertain </span>
+                                <span>Threshold: <span id="threshold1_value">0.35</span></span>
+                            </label>
+                            <input type="range" min="0" max="1" step="0.01" value="0.35" class="threshold_slider" id="threshold1">
+                        </div>
+                        <div class="threshold_slider_div"> 
+                            <label for="threshold2">
+                                <span class="bright">Uncertain <i class="fas fa-arrow-right"></i> AI </span>
+                                <span>Threshold: <span id="threshold2_value">0.85</span></span>
+                            </label>
+                            <input type="range" min="0" max="1" step="0.01" value="0.85" class="threshold_slider" id="threshold2">
+                        </div>
+                        <label class="bright" id="threshold_preview_label" for="threshold_preview">Preview of thresholds: </label>
+                        <div id="threshold_preview">
+                            <div class="zone green"></div>
+                            <div class="zone yellow"></div>
+                            <div class="zone red"></div>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div id="reset_default"></div>
+            </main>
+        </div>
+    </body>
+    <script src="threshold.js"></script>
+</html>
