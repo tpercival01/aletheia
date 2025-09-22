@@ -2,22 +2,40 @@
     <head>
         <title>Aletheia Settings Page</title>
         <link rel="stylesheet" href="settings.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     </head>
     <body>
-        <div id="settings_container">
+        <div class="settings_container">
+            <header class="settings_header">
+                <div class="header-left">
+                    <img class="logo"/>
+                    <h1 id="settings_title">Settings</h1>
+                </div>
+                <button id="return_button">
+                    <i class="fas fa-arrow-left"> </i>
+                    Return
+                </button>
+            </header>
             <main>
-                <header class="settings_header">
-                    <div class="header-left">
-                        <img class="logo"/>
-                        <p id="settings_title">Settings</p>
-                    </div>
-                    <button id="return_button">
-                        <i class="fas fa-arrow-left"></i>
-                        Return
+                <div id="settings_list">
+                    <button class="settings_redirect" id="threshold_button">
+                        Detection Sensitivity 
                     </button>
-                </header>
-                <div>
-
+                    <button class="settings_redirect" id="threshold_button">
+                        Result Indicators
+                    </button>
+                    <button class="settings_redirect" id="threshold_button">
+                        Display Style
+                    </button>
+                    <button class="settings_redirect" id="threshold_button">
+                        Page Summary
+                    </button>
+                    <button class="settings_redirect" id="threshold_button">
+                        Performance Mode
+                    </button>
+                    <button class="settings_redirect" id="threshold_button">
+                        Defaults & Reset
+                    </button>
                 </div>
                 <div id="off_button_container">
                     <label>Turn off Aletheia</label>
@@ -26,4 +44,5 @@
             </main>
         </div>
     </body>
+    <script src="settings.js"></script>
 </html>

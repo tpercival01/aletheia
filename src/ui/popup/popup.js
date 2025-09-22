@@ -125,5 +125,5 @@ function download_report(){
 
 // Open settings page
 document.getElementById('settings_button').onclick = (e) => {
-  window.location.href = chrome.runtime.getURL("src/ui/settings/threshold.html");
+  window.location.href = chrome.runtime.getURL("src/ui/settings/settings.html");
 }
