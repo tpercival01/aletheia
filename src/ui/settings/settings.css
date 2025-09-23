@@ -12,6 +12,9 @@
   --brand-gold-hover: #d99e46;
   --brand-gold-active: #c78f36;
   --brand-red: #ce0808;
+  --brand-red-hover: #e02d2d;
+  --brand-red-active: #a30606;
+  --brand-red-muted: #ffcccc;
 
   --font-family-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
@@ -41,7 +44,7 @@ body {
   font-size: 1rem;
 }
 
-.settings_container, .threshold_container {
+.settings_container, .threshold_container, .content_types_container, .page_overview_container, .site_control_contianer, .speed_accuracy_container, .result_style_container, .colours_labels_container {
   padding: 15px;
 }
 
@@ -93,52 +96,33 @@ h1 {
 
 /* Off button */
 #off_button_container {
-  margin-top: 30px;
-  border-top: 1px dotted var(--border-color);
-  padding-top: 25px;
-
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  margin-bottom: 15px;
-  padding: 6px 10px;
-
-  border: 1px solid var(--brand-red);
-  border-radius: var(--border-radius-medium);
-  background-color: rgba(206, 8, 8, 0.08);
+  justify-content: center;
+  margin-top: 20px;
 }
 
-#off_button_container label {
-  color: var(--brand-red);
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-#off_button {
+#off_button_container button {
   background: transparent;
   border: 1px solid var(--brand-red);
-  color: var(--brand-red);
-  font-size: 1.2rem;
-  font-weight: 700;
-  padding: 4px 40px;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 8px 16px;
   border-radius: var(--border-radius-medium);
-  line-height: 1;
   cursor: pointer;
   transition: all var(--transition-fast);
+  color: var(--brand-red);
+  width: 100%;
 }
 
-#off_button:hover {
-  background-color: var(--brand-red);
-  color: #fff;
-  box-shadow: 0 2px 6px rgba(206, 8, 8, 0.4);
-  transform: translateY(-2px) scale(1.05);
+#off_button_container button:hover {
+  background-color: var(--brand-red-hover);
+  color: var(--bg-primary);
 }
 
-#off_button:active {
-  transform: scale(0.9);
-  background-color: #a30606;
-  border-color: #a30606;
+#off_button_container button:active {
+  background-color: var(--brand-red-active);
+  border: var(--brand-red-active);
+  color: var(--bg-primary);
 }
 
 /*
@@ -379,7 +363,7 @@ h1 {
 .reset_default {
   display: flex;
   justify-content: center;
-  margin-top: 40px;
+  margin-top: 20px;
 }
 
 .reset_default button {
@@ -392,6 +376,8 @@ h1 {
   border-radius: var(--border-radius-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
+  width: 100%;
+  font-size: 1rem;
 }
 
 .reset_default button:hover{
@@ -400,6 +386,7 @@ h1 {
 }
 
 .reset_default button:active {
+  transform: scale(0.9);
   background-color: var(--brand-gold-active);
   color: var(--bg-primary);
 }
