@@ -4,6 +4,56 @@ import "@tensorflow/tfjs-backend-cpu";
 import "@tensorflow/tfjs-backend-webgl";
 import { AutoTokenizer } from "@xenova/transformers";
 
+const REPO_ID = "tpercival/bert-uncased-social_media";
+const MODEL_URL = `https://huggingface.co/${REPO_ID}/resolve/main/model.json`;
+
+// Kicks off loading once
+const tokenizerP = AutoTokenizer.from_pretrained(REPO_ID);
+const modelP = tf.loadGraphModel(MODEL_URL);
+
+async function runBatchPrediction(sentences) {
+  const tokenizer = await tokenizerP;
+  const model = await modelP;
+
+  const results = [];
+
+  for (const text of sentences) {
+    try {
+      // tokenize
+      const encIds = await tokenizer.encode(text);
+      const maskArr = new Array(encIds.length).fill(1);
+      const idsT = tf.tensor2d([encIds], [1, encIds.length], "int32");
+      const maskT = tf.tensor2d([maskArr], [1, encIds.length], "int32");
+
+      // predict
+      const out = await model.executeAsync({
+        input_ids: idsT,
+        attention_mask: maskT,
+      });
+      const logits = Array.isArray(out) ? out[0] : out;
+      const probs = tf.softmax(logits, -1);
+      const [h, a] = await probs.data();
+
+      results.push({ text, human: h, ai: a });
+    } catch (err) {
+      console.error("Prediction error:", err);
+      results.push({ text, error: err.message });
+    }
+  }
+
+  return results;
+}
+
+const sentences = [
+  "The quick brown fox jumps over the lazy dog.",
+  "Artificial intelligence is transforming the world in unprecedented ways.",
+  "The mitochondria is the powerhouse of the cell.",
+];
+
+runBatchPrediction(sentences).then((res) => {
+  console.log("Predictions:", res);
+});
+
 class AI_MODEL {
   constructor() {
     this.model = null;
@@ -32,15 +82,6 @@ class AI_MODEL {
     return output;
   }
 }
-
-const testSentences = [
-  "This is a test message written by a human.",
-  "The quantum fluctuations of spacetime imply a non-trivial causal structure.",
-  "Click here to win a FREE iPhone right now!!!",
-  "AI will revolutionize every industry, from healthcare to finance.",
-  "bro wtf 💀🔥😂😂😂",
-  "Yesterday I went to the park with my dog. It was sunny and calm.",
-];
 
 let tabState = {
   tabID: null,
