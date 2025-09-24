@@ -1,3 +1,24 @@
+let isEnabled;
+
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.get("enabled", ({enabled}) => {
+    if (typeof enabled === "undefined"){
+      chrome.storage.local.set({enabled: true});
+      isEnabled = true;
+    } else {
+      isEnabled = enabled;
+    }
+  })
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  chrome.storage.local.get("enabled").then(({enabled}) => {
+    isEnabled = enabled ?? true;
+  });
+});
+
+// Need to rewrite below function to add checks to see if enabled ^
+
 let tabState = {
   tabID: null,
   status: "Ready to scan!",

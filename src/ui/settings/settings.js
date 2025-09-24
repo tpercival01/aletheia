@@ -62,17 +62,21 @@ chrome.storage.local.get("settings", (result) => {
     }
 });
 
-document.querySelector(".reset_default").addEventListener("click", () => {
-    console.log("All settings reset to default");
+const master_switch = document.getElementById("master_switch_button");
+const master_switch_button = master_switch.querySelector("button");
+const reset_default = document.getElementById("reset_default_button");
+
+reset_default.addEventListener("click", () => {
     chrome.storage.local.set({settings: default_settings});
 })
 
-document.getElementById("off_button_container").addEventListener("click", () => {
-    console.log("Off button clicked");
-    chrome.storage.local.get("state", (result) => {
-        // need to fix
-        
-        // result["state"]["MASTER_SWITCH"] = "OFF";
-        // chrome.storage.local.set({state: result});
+master_switch.addEventListener("click", () => {
+    chrome.storage.local.get("enabled", ({enabled = true}) => {
+        const newEnabled = !enabled;
+        chrome.storage.local.set({enabled: newEnabled}, () => {
+            master_switch.classList.toggle("on_button_container", !newEnabled);
+            master_switch.classList.toggle("off_button_container", newEnabled);
+            master_switch_button.textContent = newEnabled ? "Turn off Aletheia!" : "Turn on Aletheia!";
+        });
     });
 });
