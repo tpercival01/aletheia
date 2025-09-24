@@ -16,4 +16,4 @@ COPY . .
 # no more VOLUME, so we don't clobber node_modules
 
 # at container start: (re)install deps & build
-CMD ["bash","-lc","yarn install --frozen-lockfile && yarn build"]
+CMD ["bash","-lc","yarn install && yarn build"]

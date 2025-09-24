@@ -9,7 +9,7 @@ const resultsList = document.getElementById("results_list");
 function updateUI(data) {
   console.log(data);
   statusMessage.innerHTML = `Status: ${data.status}`;
-  console.log(statusMessage.innerHTML)
+  console.log(statusMessage.innerHTML);
 }
 
 scanAgainButton.addEventListener("click", async () => {
@@ -21,7 +21,7 @@ scanAgainButton.addEventListener("click", async () => {
       type: "SCAN_AGAIN",
       source: "popup",
     });
-    console.log("SCANNED AGAIN")
+    console.log("SCANNED AGAIN");
     updateUI(response);
   } catch (error) {
     console.error("Error sending SCAN_AGAIN message: ", error);

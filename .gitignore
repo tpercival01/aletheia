@@ -1,5 +1,4 @@
 .parcel-cache
-dist
 node_modules
 yarn.lock
 # Byte-compiled / optimized / DLL files
@@ -14,7 +13,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/

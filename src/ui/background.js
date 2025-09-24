@@ -1,3 +1,46 @@
+import * as tf from "@tensorflow/tfjs";
+import "@tensorflow/tfjs-converter";
+import "@tensorflow/tfjs-backend-cpu";
+import "@tensorflow/tfjs-backend-webgl";
+import { AutoTokenizer } from "@xenova/transformers";
+
+class AI_MODEL {
+  constructor() {
+    this.model = null;
+    this.inited = false;
+  }
+
+  async initialize() {
+    if (this.inited) return;
+    try {
+      this.model = await pipeline("text-classification", "local/bert-uncased", {
+        quantized: false,
+      });
+      this.inited = true;
+      console.log("✅ AI_MODEL initialized");
+    } catch (error) {
+      console.error("Failed to initialize AI_MODEL:", error);
+      throw error;
+    }
+  }
+
+  async predict(text) {
+    if (!this.model) {
+      await this.initialize();
+    }
+    const output = await this.model(text);
+    return output;
+  }
+}
+
+const testSentences = [
+  "This is a test message written by a human.",
+  "The quantum fluctuations of spacetime imply a non-trivial causal structure.",
+  "Click here to win a FREE iPhone right now!!!",
+  "AI will revolutionize every industry, from healthcare to finance.",
+  "bro wtf 💀🔥😂😂😂",
+  "Yesterday I went to the park with my dog. It was sunny and calm.",
+];
 
 let tabState = {
   tabID: null,
@@ -17,17 +60,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         startedAt: Date.now(),
       };
 
-      (async function runProcess() {
-        try {
-          const payload = await process_payload(message.payload);
-          sendResponse(payload);
+      // (async function runProcess() {
+      //   try {
+      //     const payload = await process_payload(message.payload);
+      //     sendResponse(payload);
 
-          tabState.status = "Completed";
-          change_popup("Completed");
-        } catch (err) {
-          console.error("error ", err);
-        }
-      })();
+      //     tabState.status = "Completed";
+      //     change_popup("Completed");
+      //   } catch (err) {
+      //     console.error("error ", err);
+      //   }
+      // })();
 
       return true;
 
@@ -65,17 +108,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function process_payload(payload) {
-  console.log(payload)
+  console.log(payload);
 
   // TEXT
-
-  const processedTexts = await Promise.all(
-    payload.text.data.map(async (textItem) => ({
-      ...textItem,
-      confidence: await analyzeText(textItem)
-    }))
-  )
-
+  const samples = payload.text.data.map((item) => item.text);
+  console.log("Samples: ", samples.slice(0, 10));
+  const processedTexts = detector.processBatches(
+    samples.slice(0, 10),
+    samples.length
+  );
+  console.log("Processed texts: ", processedTexts);
   // IMAGES
 
   // const processedImages = await Promise.all(
@@ -88,23 +130,23 @@ async function process_payload(payload) {
   // VIDEOS
 
   // AUDIO
-  
+
   return {
-    text: {...payload.text, data: processedTexts},
-    images: {...payload.images, data: ""}
-  }
+    text: { ...payload.text, data: processedTexts },
+    images: { ...payload.images, data: "" },
+  };
 }
 
-async function analyzeText(textItem){
+async function analyzeText(textItem) {
   return Math.random();
 }
 
-async function analyzeImage(imageItem){
+async function analyzeImage(imageItem) {
   return Math.random();
 }
 
-async function analyzeVideo(videoItem){}
-async function analyzeAudio(audioItem){}
+async function analyzeVideo(videoItem) {}
+async function analyzeAudio(audioItem) {}
 
 function change_popup(process) {
   console.log(process);
@@ -152,7 +194,9 @@ async function call_to_scan_again() {
 
     console.log(response);
 
-    const popup_response = await chrome.runtime.sendMessage({status: "Completed"});
+    const popup_response = await chrome.runtime.sendMessage({
+      status: "Completed",
+    });
 
     tabState = {
       tabID: tab.id,
