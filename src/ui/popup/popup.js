@@ -1,3 +1,5 @@
+import "./popup.css";
+
 const statusMessage = document.getElementById("status_message");
 
 const scanAgainButton = document.getElementById("scan_again");
@@ -125,5 +127,5 @@ function download_report(){
 
 // Open settings page
 document.getElementById('settings_button').onclick = (e) => {
-  window.location.href = chrome.runtime.getURL("src/ui/settings/settings.html");
+  window.location.href = chrome.runtime.getURL("ui/settings/settings.html");
 }

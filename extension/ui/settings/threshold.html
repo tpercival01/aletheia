@@ -1,0 +1,67 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="settings.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+        <title>Thresholds</title>
+    </head>
+    <body id="threshold_body">
+        <div class="threshold_container">
+            <main>
+                <header class="settings_header">
+                    <div class="header-left">
+                        <img class="logo"/>
+                        <h1 id="threshold_title">Detection Sensitivity</h1>
+                    </div>
+                    <button id="return_button">
+                        <i class="fas fa-arrow-left"></i>
+                        Return
+                    </button>
+                </header>
+                <div id="threshold_container">
+                    <div id="threshold_quick_group">
+                        <label class="settings_subtitle" for="threshold_quick">Quick Presets:</label>
+                        <div id="threshold_quick">
+                            <input type="radio" id="preset_low" name="threshold_preset">
+                            <label for="preset_low">Low</label>
+
+                            <input type="radio" id="preset_med" name="threshold_preset">
+                            <label for="preset_med">Medium</label>
+
+                            <input type="radio" id="preset_high" name="threshold_preset">
+                            <label for="preset_high">High</label>
+
+                            <input type="radio" id="preset_none" name="threshold_preset" checked>
+                            <label for="preset_none">None</label>
+                        </div>
+                    </div>
+                    <div class="threshold_slider_div">
+                        <label for="threshold1">
+                            <span class="bright">Human <i class="fas fa-arrow-right"></i> Uncertain </span>
+                            <span>Threshold: <span id="threshold1_value">0.35</span></span>
+                        </label>
+                        <input type="range" min="0" max="1" step="0.01" value="0.35" class="threshold_slider" id="threshold1">
+                    </div>
+                    <div class="threshold_slider_div"> 
+                        <label for="threshold2">
+                            <span class="bright">Uncertain <i class="fas fa-arrow-right"></i> AI </span>
+                            <span>Threshold: <span id="threshold2_value">0.85</span></span>
+                        </label>
+                        <input type="range" min="0" max="1" step="0.01" value="0.85" class="threshold_slider" id="threshold2">
+                    </div>
+                    <div id="threshold_preview_div">
+                        <label class="settings_subtitle" id="threshold_preview_label" for="threshold_preview">Preview of thresholds: </label>
+                        <div id="threshold_preview">
+                            <div class="zone green"></div>
+                            <div class="zone yellow"></div>
+                            <div class="zone red"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="reset_default">
+                    <button>Reset to default</button>
+                </div>
+            </main>
+        </div>
+    </body>
+    <script src="../../threshold.bundle.js"></script>
+</html>

@@ -5,28 +5,20 @@
   "author": "Thomas Percival",
   "license": "MIT",
   "scripts": {
-    "build": "parcel build src/ui/popup.html src/ui/background.js src/ui/content.js --dist-dir dist --public-url ./ --no-content-hash && cp manifest.json dist/ && cp -R src/icons dist/ && cp -R src/models dist/",
-    "watch": "parcel watch src/ui/popup.html src/ui/background.js src/ui/content.js --dist-dir dist --public-url ./ --no-content-hash && cp manifest.json dist/ && cp -R src/icons dist/ && cp -R src/models dist/"
-  },
-  "devDependencies": {
-    "buffer": "^6.0.3",
-    "parcel": "^2.12.0",
-    "process": "^0.11.10"
+    "build": "webpack --mode production"
   },
   "dependencies": {
-    "@huggingface/transformers": "^3.7.2",
-    "@tensorflow/tfjs": "^4.22.0",
-    "@xenova/transformers": "^2.17.2",
-    "serve": "^14.2.4"
+    "@tensorflow/tfjs": "^4.10.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.10.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.10.0",
+    "@tensorflow/tfjs-converter": "^4.10.0",
+    "@xenova/transformers": "2.5.1"
   },
-  "peerDependencies": {
-    "@tensorflow/tfjs-converter": "^3.6.0",
-    "@tensorflow/tfjs-core": "^3.6.0"
-  },
-  "resolutions": {
-    "node-fetch": "2.6.7"
-  },
-  "alias": {
-    "@tensorflow/tfjs": "./node_modules/@tensorflow/tfjs/dist/tf.fesm.js"
+  "devDependencies": {
+    "copy-webpack-plugin": "^13.0.1",
+    "css-loader": "^7.1.2",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
   }
 }

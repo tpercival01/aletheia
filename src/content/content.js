@@ -1,9 +1,6 @@
 window.addEventListener("DOMContentLoaded", () => {
   console.log("Page loaded")
-  setTimeout(() => {
-    console.log("Timeout finished")
-    scrapeInitial();
-  }, 5000);
+  scrapeInitial();
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

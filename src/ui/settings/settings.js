@@ -1,33 +1,33 @@
 document.getElementById("return_button").addEventListener("click", () => {
-    window.location.href = chrome.runtime.getURL("src/ui/popup/popup.html");
+    window.location.href = chrome.runtime.getURL("popup.html");
 });
 
 document.getElementById("threshold_button").addEventListener("click", () => {
-    window.location.href = chrome.runtime.getURL("src/ui/settings/threshold.html");
+    window.location.href = chrome.runtime.getURL("ui/settings/threshold.html");
 });
 
 document.getElementById("colours_labels_button").addEventListener("click", () => {
-    window.location.href = chrome.runtime.getURL("src/ui/settings/colours_labels.html");
+    window.location.href = chrome.runtime.getURL("ui/settings/colours_labels.html");
 });
 
 document.getElementById("result_style_button").addEventListener("click", () => {
-    window.location.href = chrome.runtime.getURL("src/ui/settings/result_style.html");
+    window.location.href = chrome.runtime.getURL("ui/settings/result_style.html");
 });
 
 document.getElementById("content_types_button").addEventListener("click", () => {
-    window.location.href = chrome.runtime.getURL("src/ui/settings/content_types.html");
+    window.location.href = chrome.runtime.getURL("ui/settings/content_types.html");
 });
 
 document.getElementById("page_overview_button").addEventListener("click", () => {
-    window.location.href = chrome.runtime.getURL("src/ui/settings/page_overview.html");
+    window.location.href = chrome.runtime.getURL("ui/settings/page_overview.html");
 });
 
 document.getElementById("speed_accuracy_button").addEventListener("click", () => {
-    window.location.href = chrome.runtime.getURL("src/ui/settings/speed_accuracy.html");
+    window.location.href = chrome.runtime.getURL("ui/settings/speed_accuracy.html");
 });
 
 document.getElementById("site_control_button").addEventListener("click", () => {
-    window.location.href = chrome.runtime.getURL("src/ui/settings/site_control.html");
+    window.location.href = chrome.runtime.getURL("ui/settings/site_control.html");
 });
 
 const default_settings = {

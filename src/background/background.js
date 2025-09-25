@@ -1,3 +1,52 @@
+import * as tf from "@tensorflow/tfjs";
+import "@tensorflow/tfjs-converter";
+import "@tensorflow/tfjs-backend-cpu";
+import "@tensorflow/tfjs-backend-webgl";
+import { AutoTokenizer } from "@xenova/transformers";
+
+const REPO_ID = "tpercival/bert-uncased-social_media";
+const MODEL_URL = `https://huggingface.co/${REPO_ID}/resolve/main/model.json`;
+
+// Kicks off loading once
+const tokenizerP = AutoTokenizer.from_pretrained(REPO_ID);
+const modelP = tf.loadGraphModel(MODEL_URL);
+
+async function runBatchPrediction(data) {
+  const tokenizer = await tokenizerP;
+  const model = await modelP;
+
+  const results = [];
+  const sentences = data.text.data.slice(0,20);
+  console.log("PAYLOAD BEFORE PREDICTION: ",sentences);
+
+  for (const text of sentences) {
+    try {
+      let text_str = text.text;
+      // tokenize
+      const encIds = await tokenizer.encode(text_str);
+      const maskArr = new Array(encIds.length).fill(1);
+      const idsT = tf.tensor2d([encIds], [1, encIds.length], "int32");
+      const maskT = tf.tensor2d([maskArr], [1, encIds.length], "int32");
+
+      // predict
+      const out = model.execute({
+        input_ids: idsT,
+        attention_mask: maskT,
+      });
+      const logits = Array.isArray(out) ? out[0] : out;
+      const probs = tf.softmax(logits, -1);
+      const [, ai] = await probs.data();
+
+      results.push({ text_str, aiScore: ai});
+    } catch (err) {
+      console.error("Prediction error:", err);
+      results.push({ text_str, error: err.message });
+    }
+  }
+
+  return results;
+}
+
 let isEnabled;
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -43,7 +92,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       (async function runProcess() {
         try {
-          const payload = await process_payload(message.payload);
+          let payload;
+          runBatchPrediction(message.payload).then((res) => {
+            payload = res;
+            console.log("PAYLOAD AFTER PREDICTION: ", payload);
+          });
           sendResponse(payload);
 
           tabState.status = "Completed";
