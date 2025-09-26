@@ -1,8 +1,15 @@
-window.addEventListener("DOMContentLoaded", () => {
-  console.log("Page loaded")
-  scrapeInitial();
-});
+const payload = {
+  images: [],
+  texts: [],
+  videos: [],
+  audios: []
+}
 
+if (document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", scrapeInitial);
+} else {
+    scrapeInitial();
+}
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "RESET_PAGE_CONTENT") {
     console.log("RESETTING");
@@ -14,11 +21,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ status: "COMPLETED" });
   }
 });
-
-let payloadImages = [];
-let payloadTexts = [];
-let payloadIframes = [];
-let payloadVideos = [];
 
 /* 
   IMAGES
@@ -38,7 +40,7 @@ function process_images(images) {
           src: image.src,
           xpath: xpath_,
         };
-        payloadImages.push(processed_image);
+        payload.images.push(processed_image);
       }
     }
   }
@@ -50,7 +52,6 @@ function process_images(images) {
   DONE
 */
 function process_text() {
-  payloadTexts = [];
   const EXCLUDE_SELECTORS = [
     'header', 'nav', 'footer', 'aside', 'script', 'style', 'noscript', 'button',
     'meta', 'title', 'link', 'path',
@@ -74,7 +75,7 @@ function process_text() {
 
   const duplicate_set = new Set();
   const indexMap = new Map();
-  payloadTexts.length = 0;
+  payload.texts.length = 0;
 
   elements.forEach(el => {
     const text = (el.innerText || el.textContent || "").replace(/\s+/g, ' ').trim();
@@ -104,7 +105,7 @@ function process_text() {
       duplicate_set.delete(oldPath);
       const idx = indexMap.get(oldPath);
       if (idx !== undefined){
-        payloadTexts.splice(idx, 1);
+        payload.texts.splice(idx, 1);
         indexMap.delete(oldPath);
         for (let [p,i] of indexMap){
           if (i > idx) indexMap.set(p, i - 1);
@@ -114,14 +115,14 @@ function process_text() {
 
     if (shouldAdd){
       duplicate_set.add(xpath);
-      const newIndex = payloadTexts.length;
-      payloadTexts.push({text, xpath});
+      const newIndex = payload.texts.length;
+      payload.texts.push({text, xpath});
       indexMap.set(xpath, newIndex);
     }
   });
 
 
-  console.log(payloadTexts);
+  console.log(payload.texts);
 }
 
 /* 
@@ -206,11 +207,11 @@ async function send_payload() {
       type: "PROCESS",
       payload: {
         text: {
-          data: payloadTexts,
+          data: payload.texts,
           source: "content",
         },
         images: {
-          data: payloadImages,
+          data: payload.images,
           source: "content",
         },
       },
@@ -218,8 +219,8 @@ async function send_payload() {
     console.log("received ", response);
 
     const processed_payload = response;
-    payloadTexts = processed_payload["text"];
-    highlight_elements(processed_payload);
+    console.log(processed_payload);
+    //highlight_elements(processed_payload);
 
   } catch (error) {
     console.log(error);
@@ -236,10 +237,10 @@ Audio: NOT DONE
 
 */
 function highlight_elements(payload) {
-  if (payload["text"]){
-    for (const item of payload.text.data){
+  if (payload){
+    for (const item of payload){
       const el = document.evaluate(item.xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-      if (item.confidence > 0.8){
+      if (item.aiScore > 0.8){
         el.style.setProperty("border", "5px solid red", "important");
       } else if (item.confidence > 0.5){
         el.style.setProperty("border", "5px solid yellow", "important");

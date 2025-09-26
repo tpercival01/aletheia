@@ -1,0 +1,1 @@
+{"version":3,"file":"speed_accuracy.bundle.js","mappings":";AAAA;AACA;AACA","sources":["webpack://aletheia/./src/ui/settings/speed_accuracy.js"],"sourcesContent":["document.getElementById(\"return_button\").addEventListener(\"click\", () => {\n    window.location.href = chrome.runtime.getURL(\"ui/settings/settings.html\");\n});"],"names":[],"sourceRoot":""}

@@ -22,6 +22,7 @@ async function runBatchPrediction(data) {
   for (const text of sentences) {
     try {
       let text_str = text.text;
+
       // tokenize
       const encIds = await tokenizer.encode(text_str);
       const maskArr = new Array(encIds.length).fill(1);
@@ -33,6 +34,7 @@ async function runBatchPrediction(data) {
         input_ids: idsT,
         attention_mask: maskT,
       });
+      
       const logits = Array.isArray(out) ? out[0] : out;
       const probs = tf.softmax(logits, -1);
       const [, ai] = await probs.data();
@@ -96,12 +98,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           runBatchPrediction(message.payload).then((res) => {
             payload = res;
             console.log("PAYLOAD AFTER PREDICTION: ", payload);
+            sendResponse(payload);
           });
-          sendResponse(payload);
 
           tabState.status = "Completed";
-          tabState.aiPosCount = payload.aiPosCount;
-          tabState.aiSomeCount = payload.aiSomeCount;
+          // tabState.aiPosCount = payload.aiPosCount;
+          // tabState.aiSomeCount = payload.aiSomeCount;
           chrome.storage.local.set({state: tabState});
           change_popup("Completed");
         } catch (err) {

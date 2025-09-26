@@ -2,6 +2,9 @@ const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
+  mode: "development",
+  optimization: {minimize: false},
+  devtool: "cheap-module-source-map",
   entry: {
     background: "./src/background/background.js",
     content: "./src/content/content.js",
@@ -32,9 +35,9 @@ module.exports = {
       patterns: [
         { from: "src/ui", to: "ui", globOptions: { ignore: ["**/*.js"] } },
         { from: "src/icons", to: "icons" },
-        { from: "extension/manifest.json", to: "." },
+        { from: "src/manifest.json", to: "manifest.json" },
       ],
     }),
   ],
-  resolve: { fallback: { fs: false } },
+  resolve: { fallback: { fs: false } }
 };
