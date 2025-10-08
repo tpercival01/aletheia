@@ -1,7 +1,10 @@
 import pandas as pd
 
-CSV_FILE_NAME = 'dataset/data/AI/ai_text_openai.csv'
-# CSV_FILE_NAME = 'dataset/data/AI/ai_text_claude.csv'
+#CSV_FILE_NAME = 'dataset/data/AI/ai_text_openai.csv'
+#CSV_FILE_NAME = 'dataset/data/AI/ai_text_gemini.csv'
+CSV_FILE_NAME = 'dataset/data/AI/ai_text_together.csv'
+#CSV_FILE_NAME = 'dataset/data/AI/ai_text_claude.csv'
+
 
 df = pd.read_csv(CSV_FILE_NAME)
 
@@ -64,10 +67,10 @@ print(
 # -------------------------------------------------
 # NEW SECTION — Count of "Model" column values
 # -------------------------------------------------
-if 'source_model' in df.columns:
+if 'model' in df.columns:
     print("\n### 4. Model Distribution ###")
     print("Counts of each unique model value:")
-    print(df['source_model'].value_counts().to_string())
+    print(df['model'].value_counts().to_string())
 else:
     print("\n### 4. Model Distribution ###")
     print("Column 'Model' not found in this dataset.")

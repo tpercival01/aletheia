@@ -66,8 +66,8 @@ def scrape_reddit_data(output_file, subreddits, collect_comments=False):
             
             if collect_comments:
                 sorting_methods = [
-                    ("hot", 50),   
-                    ("top", 50)
+                    ("hot", 100),   
+                    ("top", 100)
                 ]
                 comments_per_post = 10
             else:
@@ -103,7 +103,7 @@ def scrape_reddit_data(output_file, subreddits, collect_comments=False):
                                         content = comment.body.strip()
                                         word_count = len(content.split())
                                         
-                                        if word_count >= 50:
+                                        if word_count >= 100:
                                             writer.writerow([sub, post_id, comment.id, content, word_count, comment.score])
                                             content_count += 1
                             except Exception as e:
@@ -121,7 +121,7 @@ def scrape_reddit_data(output_file, subreddits, collect_comments=False):
                             
                             word_count = len(content.split())
                             
-                            if word_count >= 150:
+                            if word_count >= 100:
                                 writer.writerow([sub, post_id, content, word_count])
                                 content_count += 1
                                 
@@ -132,5 +132,5 @@ def scrape_reddit_data(output_file, subreddits, collect_comments=False):
             content_type = "comments" if collect_comments else "posts"
             print(f"Collected {content_count} {content_type} from r/{sub}")
 
-scrape_reddit_data("reddit_posts.csv", subreddits, collect_comments=False)
-#scrape_reddit_data("reddit_comments.csv", subreddits, collect_comments=True)
+#scrape_reddit_data("reddit_posts.csv", subreddits, collect_comments=False)
+scrape_reddit_data("reddit_comments.csv", subreddits, collect_comments=True)
