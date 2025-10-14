@@ -68,21 +68,14 @@ def fetch_comments(video_id, comment_cap):
     return comments
 
 def main():
-    queries = [
-        "unexpected life hacks compilation",       
-        "street interviews 2025",                
-        "latest tech gadget review",              
-        "relationship advice reddit stories",    
-        "breaking news reactions 2025",   
-        "viral meme compilation",            
-        "music festival vlog 2025",       
+    queries = [     
         "ai tools for daily life",          
         "healthy eating and gym motivation", 
         "controversial podcast moments",
     ]
 
     output_file = "youtube_comments.csv"
-    total_limit = 20000
+    total_limit = 10000
     per_query_limit = total_limit // len(queries)
     per_video_limit = per_query_limit // 5
     collected = 0
