@@ -2,12 +2,12 @@ import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-converter";
 import "@tensorflow/tfjs-backend-cpu";
 import "@tensorflow/tfjs-backend-webgl";
+import "@tensorflow/tfjs-backend-wasm";
 import { AutoTokenizer } from "@xenova/transformers";
 
-const REPO_ID = "tpercival/bert_social_media";
+const REPO_ID = "tpercival/distilbert_social_media";
 const MODEL_URL = `https://huggingface.co/${REPO_ID}/resolve/main/model.json`;
 
-// Kicks off loading once
 const tokenizerP = AutoTokenizer.from_pretrained(REPO_ID);
 const modelP = tf.loadGraphModel(MODEL_URL);
 
@@ -16,21 +16,18 @@ async function runBatchPrediction(data) {
   const model = await modelP;
 
   const results = [];
-  // const sentences = data.text.data.slice(0, 20);
-  const sentences = data;
+  const sentences = data.text.data;
   console.log("PAYLOAD BEFORE PREDICTION: ", sentences);
 
   for (const text of sentences) {
     try {
       let text_str = text.text;
 
-      // tokenize
       const encIds = await tokenizer.encode(text_str);
       const maskArr = new Array(encIds.length).fill(1);
       const idsT = tf.tensor2d([encIds], [1, encIds.length], "int32");
       const maskT = tf.tensor2d([maskArr], [1, encIds.length], "int32");
 
-      // predict
       const out = model.execute({
         input_ids: idsT,
         attention_mask: maskT,
@@ -38,32 +35,17 @@ async function runBatchPrediction(data) {
 
       const logits = Array.isArray(out) ? out[0] : out;
       const probs = tf.softmax(logits, -1);
-      const [, ai] = await probs.data();
-
+      const data = await probs.data();
+      const ai = data[1] * 100;
       results.push({ text_str, aiScore: ai });
     } catch (err) {
       console.error("Prediction error:", err);
-      results.push({ text_str, error: err.message });
+      results.push({ error: err.message });
     }
   }
 
   return results;
 }
-
-const randomTexts = [
-  "Clouds drifted over old rooftops; someone humming in the rain.",
-  "Why do plugs never fit the first time? (seriously.)",
-  "🛰 system.status = 'nominal' // for now...",
-  "Time is not money; time *creates* money, and steals calm.",
-  "Note to self: BACKUP. not just once. not when it’s too late.",
-  "she typed fast—too fast—then ctrl+z’d her mistakes like ghosts.",
-  "‘Tomorrow’, he said, but tomorrow dissolved in another scroll.",
-  "The cat looked at the monitor. I swear she *understood* the code.",
-  "Error 404: motivation not found; coffee.exe initiating recovery.",
-  "in a world of noise, silence debugged my brain and rebooted clarity.",
-];
-
-runBatchPrediction(randomTexts);
 
 let isEnabled;
 
@@ -83,8 +65,6 @@ chrome.runtime.onStartup.addListener(() => {
     isEnabled = enabled ?? true;
   });
 });
-
-// Need to rewrite below function to add checks to see if enabled ^
 
 let tabState = {
   tabID: null,
@@ -111,11 +91,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       (async function runProcess() {
         try {
           let payload;
-          // runBatchPrediction(message.payload).then((res) => {
-          //   payload = res;
-          //   console.log("PAYLOAD AFTER PREDICTION: ", payload);
-          //   sendResponse(payload);
-          // });
+          runBatchPrediction(message.payload).then((res) => {
+            payload = res;
+            console.log("PAYLOAD AFTER PREDICTION: ", payload);
+            sendResponse(payload);
+          });
 
           tabState.status = "Completed";
           // tabState.aiPosCount = payload.aiPosCount;
