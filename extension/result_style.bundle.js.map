@@ -1,1 +1,0 @@
-{"version":3,"file":"result_style.bundle.js","mappings":";AAAA;AACA;AACA","sources":["webpack://aletheia/./src/ui/settings/result_style.js"],"sourcesContent":["document.getElementById(\"return_button\").addEventListener(\"click\", () => {\n    window.location.href = chrome.runtime.getURL(\"ui/settings/settings.html\");\n});"],"names":[],"sourceRoot":""}

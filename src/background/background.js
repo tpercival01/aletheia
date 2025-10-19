@@ -4,7 +4,7 @@ import "@tensorflow/tfjs-backend-cpu";
 import "@tensorflow/tfjs-backend-webgl";
 import { AutoTokenizer } from "@xenova/transformers";
 
-const REPO_ID = "tpercival/bert-uncased-social_media";
+const REPO_ID = "tpercival/bert_social_media";
 const MODEL_URL = `https://huggingface.co/${REPO_ID}/resolve/main/model.json`;
 
 // Kicks off loading once
@@ -16,8 +16,9 @@ async function runBatchPrediction(data) {
   const model = await modelP;
 
   const results = [];
-  const sentences = data.text.data.slice(0,20);
-  console.log("PAYLOAD BEFORE PREDICTION: ",sentences);
+  // const sentences = data.text.data.slice(0, 20);
+  const sentences = data;
+  console.log("PAYLOAD BEFORE PREDICTION: ", sentences);
 
   for (const text of sentences) {
     try {
@@ -34,12 +35,12 @@ async function runBatchPrediction(data) {
         input_ids: idsT,
         attention_mask: maskT,
       });
-      
+
       const logits = Array.isArray(out) ? out[0] : out;
       const probs = tf.softmax(logits, -1);
       const [, ai] = await probs.data();
 
-      results.push({ text_str, aiScore: ai});
+      results.push({ text_str, aiScore: ai });
     } catch (err) {
       console.error("Prediction error:", err);
       results.push({ text_str, error: err.message });
@@ -49,21 +50,36 @@ async function runBatchPrediction(data) {
   return results;
 }
 
+const randomTexts = [
+  "Clouds drifted over old rooftops; someone humming in the rain.",
+  "Why do plugs never fit the first time? (seriously.)",
+  "🛰 system.status = 'nominal' // for now...",
+  "Time is not money; time *creates* money, and steals calm.",
+  "Note to self: BACKUP. not just once. not when it’s too late.",
+  "she typed fast—too fast—then ctrl+z’d her mistakes like ghosts.",
+  "‘Tomorrow’, he said, but tomorrow dissolved in another scroll.",
+  "The cat looked at the monitor. I swear she *understood* the code.",
+  "Error 404: motivation not found; coffee.exe initiating recovery.",
+  "in a world of noise, silence debugged my brain and rebooted clarity.",
+];
+
+runBatchPrediction(randomTexts);
+
 let isEnabled;
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get("enabled", ({enabled}) => {
-    if (typeof enabled === "undefined"){
-      chrome.storage.local.set({enabled: true});
+  chrome.storage.local.get("enabled", ({ enabled }) => {
+    if (typeof enabled === "undefined") {
+      chrome.storage.local.set({ enabled: true });
       isEnabled = true;
     } else {
       isEnabled = enabled;
     }
-  })
+  });
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  chrome.storage.local.get("enabled").then(({enabled}) => {
+  chrome.storage.local.get("enabled").then(({ enabled }) => {
     isEnabled = enabled ?? true;
   });
 });
@@ -75,10 +91,10 @@ let tabState = {
   status: "Ready to scan!",
   startedAt: null,
   aiPosCount: 0,
-  aiSomeCount: 0
+  aiSomeCount: 0,
 };
 
-chrome.storage.local.set({state: tabState});
+chrome.storage.local.set({ state: tabState });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
@@ -88,23 +104,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         tabID: tabState.tabID,
         status: "Processing",
         startedAt: Date.now(),
-        aiCount: 0
+        aiCount: 0,
       };
-      chrome.storage.local.set({state: tabState});
+      chrome.storage.local.set({ state: tabState });
 
       (async function runProcess() {
         try {
           let payload;
-          runBatchPrediction(message.payload).then((res) => {
-            payload = res;
-            console.log("PAYLOAD AFTER PREDICTION: ", payload);
-            sendResponse(payload);
-          });
+          // runBatchPrediction(message.payload).then((res) => {
+          //   payload = res;
+          //   console.log("PAYLOAD AFTER PREDICTION: ", payload);
+          //   sendResponse(payload);
+          // });
 
           tabState.status = "Completed";
           // tabState.aiPosCount = payload.aiPosCount;
           // tabState.aiSomeCount = payload.aiSomeCount;
-          chrome.storage.local.set({state: tabState});
+          chrome.storage.local.set({ state: tabState });
           change_popup("Completed");
         } catch (err) {
           console.error("error ", err);
@@ -121,7 +137,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         status: "Processing",
         startedAt: Date.now(),
       };
-      chrome.storage.local.set({state: tabState});
+      chrome.storage.local.set({ state: tabState });
 
       sendResponse(tabState);
       call_to_scan_again();
@@ -134,7 +150,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         status: "Resetting",
         startedAt: Date.now(),
       };
-      chrome.storage.local.set({state: tabState});
+      chrome.storage.local.set({ state: tabState });
 
       sendResponse(tabState);
       call_to_reset();
@@ -148,26 +164,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function process_payload(payload) {
-  console.log(payload)
+  console.log(payload);
 
   // TEXT
 
   const processedTexts = await Promise.all(
     payload.text.data.map(async (textItem) => ({
       ...textItem,
-      confidence: await analyzeText(textItem)
+      confidence: await analyzeText(textItem),
     }))
-  )
+  );
 
   let positive_AI = 0;
   let somewhat_AI = 0;
   processedTexts.forEach((item) => {
-    if (item.confidence > 0.9){
+    if (item.confidence > 0.9) {
       positive_AI += 1;
-    } else if (item.confidence > 0.5){
+    } else if (item.confidence > 0.5) {
       somewhat_AI += 1;
     }
-  })
+  });
 
   // IMAGES
 
@@ -181,25 +197,25 @@ async function process_payload(payload) {
   // VIDEOS
 
   // AUDIO
-  
+
   return {
-    text: {...payload.text, data: processedTexts},
-    images: {...payload.images, data: ""},
+    text: { ...payload.text, data: processedTexts },
+    images: { ...payload.images, data: "" },
     aiPosCount: positive_AI,
-    aiSomeCount: somewhat_AI
-  }
+    aiSomeCount: somewhat_AI,
+  };
 }
 
-async function analyzeText(textItem){
+async function analyzeText(textItem) {
   return 0.99;
 }
 
-async function analyzeImage(imageItem){
+async function analyzeImage(imageItem) {
   return Math.random();
 }
 
-async function analyzeVideo(videoItem){}
-async function analyzeAudio(audioItem){}
+async function analyzeVideo(videoItem) {}
+async function analyzeAudio(audioItem) {}
 
 function change_popup(process) {
   console.log(process);
@@ -215,7 +231,6 @@ function change_popup(process) {
 }
 
 async function call_to_reset() {
-
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.id) {
     await chrome.tabs.sendMessage(tab.id, {
@@ -229,7 +244,7 @@ async function call_to_reset() {
     status: "Ready to scan!",
     startedAt: null,
   };
-  chrome.storage.local.set({state: tabState});
+  chrome.storage.local.set({ state: tabState });
 
   chrome.action.setBadgeText({ text: "" });
 }
@@ -247,7 +262,6 @@ async function call_to_scan_again() {
       status: "Completed",
       startedAt: null,
     };
-    chrome.storage.local.set({state: tabState});
-
+    chrome.storage.local.set({ state: tabState });
   }
 }
