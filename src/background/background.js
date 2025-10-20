@@ -1,8 +1,4 @@
 import * as tf from "@tensorflow/tfjs";
-import "@tensorflow/tfjs-converter";
-import "@tensorflow/tfjs-backend-cpu";
-import "@tensorflow/tfjs-backend-webgl";
-import "@tensorflow/tfjs-backend-wasm";
 import { AutoTokenizer } from "@xenova/transformers";
 
 const REPO_ID = "tpercival/distilbert_social_media";
@@ -35,9 +31,16 @@ async function runBatchPrediction(data) {
 
       const logits = Array.isArray(out) ? out[0] : out;
       const probs = tf.softmax(logits, -1);
-      const data = await probs.data();
-      const ai = data[1] * 100;
-      results.push({ text_str, aiScore: ai });
+      const [human, ai] = await probs.data();
+      results.push({ 
+        aiScore: ai * 100,
+        humanScore: human * 100,
+      });
+
+      idsT.dispose();
+      maskT.dispose();
+      logits.dispose();
+      probs.dispose();
     } catch (err) {
       console.error("Prediction error:", err);
       results.push({ error: err.message });
@@ -57,6 +60,38 @@ chrome.runtime.onInstalled.addListener(() => {
     } else {
       isEnabled = enabled;
     }
+
+    const default_settings = {
+      thresholds: [0.35, 0.85],
+      colours: {
+          human: "green",
+          uncertain: "yellow",
+          ai: "red",
+      },
+      resultStyle: "badge",
+      contentTypes: {
+          text: true,
+          images: false,
+          video: false,
+          audio: false
+      },
+      pageOverview: true,
+      performance: "balanced",
+      siteControl: {
+          whitelist: [],
+          blacklist: [],
+      },
+    };
+    
+    chrome.storage.local.get("settings", (result) => {
+        if (!result.settings){
+            chrome.storage.local.set({settings: default_settings}, () => {
+                console.log(default_settings);
+            });
+        } else {
+            console.log(result.settings);
+        }
+    });
   });
 });
 
@@ -90,13 +125,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       (async function runProcess() {
         try {
-          let payload;
-          runBatchPrediction(message.payload).then((res) => {
-            payload = res;
-            console.log("PAYLOAD AFTER PREDICTION: ", payload);
-            sendResponse(payload);
-          });
-
+          const response = await process_payload(message.payload);
+          sendResponse(response);
           tabState.status = "Completed";
           // tabState.aiPosCount = payload.aiPosCount;
           // tabState.aiSomeCount = payload.aiSomeCount;
@@ -144,26 +174,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function process_payload(payload) {
-  console.log(payload);
-
   // TEXT
-
-  const processedTexts = await Promise.all(
-    payload.text.data.map(async (textItem) => ({
-      ...textItem,
-      confidence: await analyzeText(textItem),
-    }))
-  );
-
-  let positive_AI = 0;
-  let somewhat_AI = 0;
-  processedTexts.forEach((item) => {
-    if (item.confidence > 0.9) {
-      positive_AI += 1;
-    } else if (item.confidence > 0.5) {
-      somewhat_AI += 1;
-    }
-  });
+  const results = await runBatchPrediction(payload);
+  const processedTexts = payload.text.data.map((obj, i) => ({
+    ...obj,
+    aiScore: results[i]["aiScore"],
+    humanScore: results[i]["humanScore"]
+  }));
 
   // IMAGES
 
@@ -179,23 +196,9 @@ async function process_payload(payload) {
   // AUDIO
 
   return {
-    text: { ...payload.text, data: processedTexts },
-    images: { ...payload.images, data: "" },
-    aiPosCount: positive_AI,
-    aiSomeCount: somewhat_AI,
+    text: processedTexts
   };
 }
-
-async function analyzeText(textItem) {
-  return 0.99;
-}
-
-async function analyzeImage(imageItem) {
-  return Math.random();
-}
-
-async function analyzeVideo(videoItem) {}
-async function analyzeAudio(audioItem) {}
 
 function change_popup(process) {
   console.log(process);

@@ -5,11 +5,15 @@ const payload = {
   audios: [],
 };
 
+const workQueue = [];
+let processing = false;
+
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", scrapeInitial);
 } else {
   scrapeInitial();
 }
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "RESET_PAGE_CONTENT") {
     console.log("RESETTING");
@@ -51,113 +55,65 @@ function process_images(images) {
   Scrape and Clean
   DONE
 */
+
 function process_text() {
-  const EXCLUDE_SELECTORS = [
-    "header",
-    "nav",
-    "footer",
-    "aside",
-    "script",
-    "style",
-    "noscript",
-    "button",
-    "meta",
-    "title",
-    "link",
-    "path",
-    "[role=banner]",
-    "[role=navigation]",
-    "[role=complementary]",
-    "[role=menubar]",
-    "[role=menu]",
-    "[aria-hidden=true]",
-    ".nav",
-    ".navbar",
-    ".menu",
-    ".header",
-    ".footer",
-    ".sidebar",
-    ".cookie",
-    ".popup",
-    ".modal",
-    ".ad",
-    ".advertisement",
-  ].join(",");
+  const EXCLUDE_SELECTORS = `
+    header, nav, footer, aside, script, style, noscript, button,
+    meta, title, link, path, [role=banner], [role=navigation],
+    [role=complementary], [role=menubar], [role=menu],
+    [aria-hidden=true], .nav, .navbar, .menu, .header, .footer,
+    .sidebar, .cookie, .popup, .modal, .ad, .advertisement
+  `;
 
   const TEXT_BLACKLIST = [
-    "promoted",
-    "click here",
-    "read more",
-    "share",
-    "login",
-    "sign in",
-    "submit",
-    "privacy policy",
-    "user agreement",
-    "all rights reserved",
-    "learn more",
-    "t&cs apply",
-    "terms and conditions",
+    "promoted", "click here", "read more", "share",
+    "login", "sign in", "submit", "privacy policy",
+    "user agreement", "all rights reserved", "learn more",
+    "terms and conditions", "t&cs apply"
   ];
 
-  const elements = Array.from(document.querySelectorAll("*")).filter((el) => {
-    if (el.matches(EXCLUDE_SELECTORS)) return false;
-    if (el.closest(EXCLUDE_SELECTORS)) return false;
-    return true;
-  });
-
   const duplicate_set = new Set();
-  const indexMap = new Map();
-  payload.texts.length = 0;
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT
+  );
 
-  elements.forEach((el) => {
-    const text = (el.innerText || el.textContent || "")
-      .replace(/\s+/g, " ")
-      .trim();
-    if (!text) return;
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    const parent = node.parentElement;
+    if (!parent) continue;
+    if (parent.matches(EXCLUDE_SELECTORS)) continue;
+    if (parent.closest(EXCLUDE_SELECTORS)) continue;
 
-    const words = text.split(" ");
-    if (words.length < 10) return;
+    const text = node.textContent.replace(/\s+/g, " ").trim();
+    if (!text) continue;
+    const wordCount = (text.match(/\b\w+\b/g) || []).length;
+    if (wordCount < 20) continue;
+    if (text === text.toUpperCase()) continue;
+    if (TEXT_BLACKLIST.some((t) => text.toLowerCase().includes(t))) continue;
 
-    if (TEXT_BLACKLIST.some((pattern) => text.toLowerCase().includes(pattern)))
-      return;
+    const style = getComputedStyle(parent);
+    if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") continue;
 
-    if (text === text.toUpperCase()) return;
+    const rect = parent.getBoundingClientRect();
+    if (rect.width < 100 || rect.height < 20) continue;
 
-    const xpath = generate_xpath(el);
-    let shouldAdd = true;
-    const toRemove = [];
+    // Deduplicate by normalized text hash
+    const norm = text.toLowerCase().slice(0, 300);
+    if (duplicate_set.has(norm)) continue;
+    duplicate_set.add(norm);
 
-    for (let existing of duplicate_set) {
-      if (xpath.startsWith(existing)) {
-        toRemove.push(existing);
-      } else if (existing.startsWith(xpath)) {
-        shouldAdd = false;
-        break;
-      }
+    // Chunk long content
+    const maxWords = 150;
+    const words = text.trim().split(/\s+/);
+    const chunks = [];
+    for (let i = 0; i < words.length; i += maxWords) {
+      chunks.push(words.slice(i, i + maxWords).join(" "));
     }
+    chunks.forEach((chunk) => payload.texts.push({ text: chunk, xpath: generate_xpath(parent) }));
+  }
 
-    toRemove.forEach((oldPath) => {
-      duplicate_set.delete(oldPath);
-      const idx = indexMap.get(oldPath);
-      if (idx !== undefined) {
-        payload.texts.splice(idx, 1);
-        indexMap.delete(oldPath);
-        for (let [p, i] of indexMap) {
-          if (i > idx) indexMap.set(p, i - 1);
-        }
-      }
-    });
-
-    if (shouldAdd) {
-      duplicate_set.add(xpath);
-      const newIndex = payload.texts.length;
-      payload.texts.push({ text, xpath });
-      indexMap.set(xpath, newIndex);
-    }
-  });
-
-  console.log(payload.texts);
+  return payload;
 }
 
 /* 
@@ -237,27 +193,31 @@ function scrapeInitial() {
 
 async function send_payload() {
   console.log("sent payload");
-  try {
-    const response = await chrome.runtime.sendMessage({
-      type: "PROCESS",
-      payload: {
-        text: {
-          data: payload.texts.slice(0, 10),
-          source: "content",
+  if (!processing){
+    processing = true;
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: "PROCESS",
+        payload: {
+          text: {
+            data: payload.texts.slice(0, 50),
+            source: "content",
+          },
+          images: {
+            data: payload.images,
+            source: "content",
+          },
         },
-        images: {
-          data: payload.images,
-          source: "content",
-        },
-      },
-    });
-    console.log("received ", response);
+      });
+      console.log("received ", response);
 
-    const processed_payload = response;
-    console.log(processed_payload);
-    //highlight_elements(processed_payload);
-  } catch (error) {
-    console.log(error);
+      const processed_payload = response;
+      processing = false;
+      console.log(processed_payload);
+      highlight_elements(processed_payload);
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
 
@@ -270,9 +230,25 @@ Video: NOT DONE
 Audio: NOT DONE
 
 */
-function highlight_elements(payload) {
-  if (payload) {
-    for (const item of payload) {
+async function highlight_elements(payload) {
+  if (!payload || !Array.isArray(payload.text)) return;
+  console.log("Highlighting: ", payload)
+
+  let thresholds;
+
+  try {
+    thresholds = await get_settings("thresholds");
+  } catch (err) {
+    console.error("Failed", err);
+    thresholds = [0.35, 0.85];
+  }
+
+  const [low, high] = thresholds;
+
+  for (const item of payload.text) {
+    try {
+      if (!item || !item.xpath) continue;
+
       const el = document.evaluate(
         item.xpath,
         document,
@@ -280,34 +256,21 @@ function highlight_elements(payload) {
         XPathResult.FIRST_ORDERED_NODE_TYPE,
         null
       ).singleNodeValue;
-      if (item.aiScore > 0.8) {
-        el.style.setProperty("border", "5px solid red", "important");
-      } else if (item.confidence > 0.5) {
-        el.style.setProperty("border", "5px solid yellow", "important");
+      if (!el) {
+        console.warn("Element not found with xpath: ", item.xpath);
+        continue;
       }
+
+      if (item.aiScore > high) {
+        el.style.setProperty("border", "5px solid red", "important");
+      } else if (item.aiScore > low) {
+        el.style.setProperty("border", "5px solid yellow", "important");
+      } else {
+        el.style.setProperty("border", "5px solid green", "important");
+      }
+    } catch (err) {
+      console.error("Error", err, item);
     }
-  } else if (payload["images"]) {
-    console.log("images. no images.");
-    //   for (const item of payload) {
-    //     let temp = document.evaluate(
-    //       item.xpath,
-    //       document,
-    //       null,
-    //       XPathResult.FIRST_ORDERED_NODE_TYPE,
-    //       null
-    //     ).singleNodeValue;
-    //     if (item.confidence > 0.8) {
-    //       temp.style.setProperty(
-    //         "box-shadow",
-    //         "inset 0 0 10px #eb4034",
-    //         "important"
-    //       );
-    //       temp.style.setProperty("border-radius", "1.25em", "important");
-    //     } else if (item.confidence > 0.5) {
-    //       temp.style.setProperty("box-shadow", "2px solid #ffbf00", "important");
-    //       temp.style.setProperty("border-radius", "1.25em", "important");
-    //     }
-    //   }
   }
 }
 
@@ -335,4 +298,15 @@ function reset_everything() {
   payloadTexts = [];
   payloadIframes = [];
   payloadVideos = [];
+}
+
+async function get_settings(param){
+  const result = await chrome.storage.local.get("settings");
+  const settings = result.settings;
+  
+  if (param == "all"){
+    return settings;
+  } else if (param == "thresholds"){
+    return settings?.thresholds;
+  }
 }

@@ -30,37 +30,6 @@ document.getElementById("site_control_button").addEventListener("click", () => {
     window.location.href = chrome.runtime.getURL("ui/settings/site_control.html");
 });
 
-const default_settings = {
-    thresholds: [0.35, 0.85],
-    colours: {
-        human: "green",
-        uncertain: "yellow",
-        ai: "red",
-    },
-    resultStyle: "badge",
-    contentTypes: {
-        text: true,
-        images: false,
-        video: false,
-        audio: false
-    },
-    pageOverview: true,
-    performance: "balanced",
-    siteControl: {
-        whitelist: [],
-        blacklist: [],
-    },
-};
-
-chrome.storage.local.get("settings", (result) => {
-    if (!result.settings){
-        chrome.storage.local.set({settings: default_settings}, () => {
-            console.log(default_settings);
-        });
-    } else {
-        console.log(result.settings);
-    }
-});
 
 const master_switch = document.getElementById("master_switch_button");
 const master_switch_button = master_switch.querySelector("button");
