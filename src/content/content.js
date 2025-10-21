@@ -1,17 +1,22 @@
-const payload = {
-  images: [],
-  texts: [],
-  videos: [],
-  audios: [],
-};
-
-const workQueue = [];
+const work_queue = [];
 let processing = false;
+const duplicate_set = new Set();
+let mutation_observer;
+
+function log(...args) {
+  console.log("%c[Aletheia]", "color: #7d57ff; font-weight: bold;", ...args);
+}
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", scrapeInitial);
+  document.addEventListener("DOMContentLoaded", init_content_script);
 } else {
-  scrapeInitial();
+  init_content_script();
+}
+
+function init_content_script() {
+  log("Initializing content script");
+  start_mutation_observer();
+  scrape_initial();
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -21,10 +26,80 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ status: "RESET_DONE" });
   } else if (message.type === "SCAN_AGAIN") {
     console.log("SCANNING AGAIN");
-    scrapeInitial();
+    scrape_initial();
     sendResponse({ status: "COMPLETED" });
   }
 });
+
+const visibleObserver = new IntersectionObserver((entries) => {
+  for (const entry of entries){
+    if (entry.isIntersecting){
+      process_text(entry.target);
+      visibleObserver.unobserve(entry.target);
+      log("IntersectionObserver: node visible ->", entry.target.tagName);
+    }
+  }
+});
+
+function start_mutation_observer(){
+  mutation_observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE && node.matches("p, div, article, section")){
+          visibleObserver.observe(node);
+          log("MutationObserver: new node detected -> ", node.tagName);
+        }
+      }
+    }
+  });
+
+  mutation_observer.observe(document.body, {childList: true, subtree: true});
+}
+
+// chunks: array of media (texts, images, videos)
+function add_to_queue(chunks){
+  log(`Queue add: +${chunks.length}, total ${work_queue.length}`);
+  if (work_queue.length < 300){
+    for (const chunk of chunks){
+      work_queue.push(chunk);
+    }
+  }
+}
+
+
+async function schedule_send_payload() {
+  log(`Scheduler tick — queue:${work_queue.length}, processing:${processing}`);
+  if (processing) return;
+  if (work_queue.length === 0) return;
+
+  const batch = work_queue.splice(0, 50);
+  processing = true;
+
+  try {
+    log(`Sending batch of ${batch.length}`);
+    const response = await chrome.runtime.sendMessage({
+      type: "PROCESS",
+      payload: {
+        text: {
+          data: batch,
+          source: "content",
+        },
+      },
+    });
+
+    const processed_payload = response;
+
+    log(`Batch processed; response ${Array.isArray(response?.text) ? response.text.length : 0} items`);
+
+    highlight_elements(processed_payload);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+setInterval(() => {
+  schedule_send_payload();
+}, 5000);
 
 /* 
   IMAGES
@@ -56,7 +131,9 @@ function process_images(images) {
   DONE
 */
 
-function process_text() {
+function process_text(tree) {
+  const texts = [];
+
   const EXCLUDE_SELECTORS = `
     header, nav, footer, aside, script, style, noscript, button,
     meta, title, link, path, [role=banner], [role=navigation],
@@ -72,9 +149,8 @@ function process_text() {
     "terms and conditions", "t&cs apply"
   ];
 
-  const duplicate_set = new Set();
   const walker = document.createTreeWalker(
-    document.body,
+    tree,
     NodeFilter.SHOW_TEXT
   );
 
@@ -110,10 +186,10 @@ function process_text() {
     for (let i = 0; i < words.length; i += maxWords) {
       chunks.push(words.slice(i, i + maxWords).join(" "));
     }
-    chunks.forEach((chunk) => payload.texts.push({ text: chunk, xpath: generate_xpath(parent) }));
+    chunks.forEach((chunk) => texts.push({ text: chunk, xpath: generate_xpath(parent) }));
   }
 
-  return payload;
+  add_to_queue(texts);
 }
 
 /* 
@@ -130,6 +206,7 @@ function process_videos(videos) {}
 */
 function process_audio(audio) {}
 
+// element: a html node
 function generate_xpath(element) {
   if (!element || element.nodeType !== Node.ELEMENT_NODE) {
     return "";
@@ -165,60 +242,28 @@ function generate_xpath(element) {
 }
 
 /*
-
 SCRAPE HTML ELEMENTS:
 
 TEXT: DONE
-IMAGES: NOT DONE
+IMAGES: DONE
 VIDEO: NOT DONE
 AUDIO: NOT DONE
-
 */
 
-function scrapeInitial() {
+function scrape_initial() {
+  log("Running initial scrape on page load")
   // IMAGES
   //process_images(images);
 
   // TEXT
-  process_text();
+  process_text(document.body);
+  log(`Initial scrape complete — queue now has ${work_queue.length} items`);
 
   // VIDEO
   // process_video(video);
 
   // AUDIO
   // process_audio(audio);
-
-  send_payload();
-}
-
-async function send_payload() {
-  console.log("sent payload");
-  if (!processing){
-    processing = true;
-    try {
-      const response = await chrome.runtime.sendMessage({
-        type: "PROCESS",
-        payload: {
-          text: {
-            data: payload.texts.slice(0, 50),
-            source: "content",
-          },
-          images: {
-            data: payload.images,
-            source: "content",
-          },
-        },
-      });
-      console.log("received ", response);
-
-      const processed_payload = response;
-      processing = false;
-      console.log(processed_payload);
-      highlight_elements(processed_payload);
-    } catch (error) {
-      console.log(error);
-    }
-  }
 }
 
 /*
@@ -231,8 +276,10 @@ Audio: NOT DONE
 
 */
 async function highlight_elements(payload) {
+  log("Highlighting started for batch", payload.text?.length || 0);
+  processing = false;
+
   if (!payload || !Array.isArray(payload.text)) return;
-  console.log("Highlighting: ", payload)
 
   let thresholds;
 
@@ -272,20 +319,27 @@ async function highlight_elements(payload) {
       console.error("Error", err, item);
     }
   }
+
+
+	log("Highlighting finished, processing flag reset");
+
+  schedule_send_payload();
 }
 
 function reset_everything() {
   // TEXT
-  for (const item of payloadTexts.data) {
-    const el = document.evaluate(
-      item.xpath,
-      document,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
-    el.style.setProperty("border", "none", "important");
-  }
+  // TO DO: FIGURE OUT HOW TO RESET EVEYRTHING WITHOUT GLOBAL PAYLOAD
+
+  // for (const item of payloadTexts.data) {
+  //   const el = document.evaluate(
+  //     item.xpath,
+  //     document,
+  //     null,
+  //     XPathResult.FIRST_ORDERED_NODE_TYPE,
+  //     null
+  //   ).singleNodeValue;
+  //   el.style.setProperty("border", "none", "important");
+  // }
 
   // IMAGES
 
@@ -293,11 +347,9 @@ function reset_everything() {
 
   // AUDIO
 
-  // reset all payloads
-  payloadImages = [];
-  payloadTexts = [];
-  payloadIframes = [];
-  payloadVideos = [];
+  work_queue = [];
+  duplicate_set = new Set();
+  mutation_observer?.disconnect();
 }
 
 async function get_settings(param){
