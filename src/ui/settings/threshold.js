@@ -3,9 +3,9 @@ document.getElementById("return_button").addEventListener("click", () => {
 });
 
 const presets = {
-    low: [0.45, 0.90],
-    medium: [0.30, 0.80],
-    high: [0.20, 0.60]
+    low: [45, 90],
+    medium: [30, 80],
+    high: [20, 60]
 }
 
 const preset_low = document.getElementById("preset_low");

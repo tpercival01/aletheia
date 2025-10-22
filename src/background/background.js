@@ -1,5 +1,5 @@
 import * as tf from "@tensorflow/tfjs";
-import { AutoTokenizer } from "@xenova/transformers";
+import { AutoTokenizer, cat } from "@xenova/transformers";
 
 const REPO_ID = "tpercival/distilbert_social_media";
 const MODEL_URL = `https://huggingface.co/${REPO_ID}/resolve/main/model.json`;
@@ -8,6 +8,8 @@ const tokenizerP = AutoTokenizer.from_pretrained(REPO_ID);
 const modelP = tf.loadGraphModel(MODEL_URL);
 
 async function runBatchPrediction(data) {
+  if (!data?.text?.data?.length) return [];
+
   const tokenizer = await tokenizerP;
   const model = await modelP;
 
@@ -18,11 +20,18 @@ async function runBatchPrediction(data) {
   for (const text of sentences) {
     try {
       let text_str = text.text;
+      let encIds;
 
-      const encIds = await tokenizer.encode(text_str);
+      try {
+        encIds = await tokenizer.encode(text_str);
+      } catch(err){
+        console.log(text_str, " caused error: ", err);
+      }
+
       const maskArr = new Array(encIds.length).fill(1);
       const idsT = tf.tensor2d([encIds], [1, encIds.length], "int32");
-      const maskT = tf.tensor2d([maskArr], [1, encIds.length], "int32");
+      const maskT = tf.onesLike(idsT);
+      //const maskT = tf.tensor2d([maskArr], [1, encIds.length], "int32");
 
       const out = model.execute({
         input_ids: idsT,
@@ -62,7 +71,7 @@ chrome.runtime.onInstalled.addListener(() => {
     }
 
     const default_settings = {
-      thresholds: [0.35, 0.85],
+      thresholds: [35, 85],
       colours: {
           human: "green",
           uncertain: "yellow",

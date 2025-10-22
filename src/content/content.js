@@ -3,7 +3,9 @@ let processing = false;
 const duplicate_set = new Set();
 let mutation_observer;
 
+let DEBUG = true;
 function log(...args) {
+  if (!DEBUG) return;
   console.log("%c[Aletheia]", "color: #7d57ff; font-weight: bold;", ...args);
 }
 
@@ -90,7 +92,7 @@ async function schedule_send_payload() {
     const processed_payload = response;
 
     log(`Batch processed; response ${Array.isArray(response?.text) ? response.text.length : 0} items`);
-
+    console.log("AFTER PROCESSING: ", processed_payload);
     highlight_elements(processed_payload);
   } catch (error) {
     console.log(error);
@@ -133,6 +135,7 @@ function process_images(images) {
 
 function process_text(tree) {
   const texts = [];
+  const parentTexts = new Map();
 
   const EXCLUDE_SELECTORS = `
     header, nav, footer, aside, script, style, noscript, button,
@@ -149,45 +152,49 @@ function process_text(tree) {
     "terms and conditions", "t&cs apply"
   ];
 
-  const walker = document.createTreeWalker(
-    tree,
-    NodeFilter.SHOW_TEXT
-  );
+  const walker = document.createTreeWalker(tree, NodeFilter.SHOW_TEXT);
 
   while (walker.nextNode()) {
     const node = walker.currentNode;
     const parent = node.parentElement;
     if (!parent) continue;
-    if (parent.matches(EXCLUDE_SELECTORS)) continue;
-    if (parent.closest(EXCLUDE_SELECTORS)) continue;
 
-    const text = node.textContent.replace(/\s+/g, " ").trim();
-    if (!text) continue;
+    if (parent.matches(EXCLUDE_SELECTORS) || parent.closest(EXCLUDE_SELECTORS)) continue;
+    const existing = parentTexts.get(parent) || "";
+    parentTexts.set(parent, existing + " " + node.textContent);
+  }
+
+  parentTexts.forEach((rawText, parent) => { 
+
+    const text = rawText.replace(/\s+/g, " ").trim();
+    if (!text) return;
+
     const wordCount = (text.match(/\b\w+\b/g) || []).length;
-    if (wordCount < 20) continue;
-    if (text === text.toUpperCase()) continue;
-    if (TEXT_BLACKLIST.some((t) => text.toLowerCase().includes(t))) continue;
+    if (wordCount < 20) return;
+    if (text === text.toUpperCase()) return;
+    if (TEXT_BLACKLIST.some((t) => text.toLowerCase().includes(t))) return;
 
     const style = getComputedStyle(parent);
-    if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") continue;
+    if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") return;
 
     const rect = parent.getBoundingClientRect();
-    if (rect.width < 100 || rect.height < 20) continue;
+    if (rect.width < 100 || rect.height < 20) return;
 
-    // Deduplicate by normalized text hash
     const norm = text.toLowerCase().slice(0, 300);
-    if (duplicate_set.has(norm)) continue;
+    if (duplicate_set.has(norm)) return;
     duplicate_set.add(norm);
 
-    // Chunk long content
     const maxWords = 150;
-    const words = text.trim().split(/\s+/);
-    const chunks = [];
-    for (let i = 0; i < words.length; i += maxWords) {
-      chunks.push(words.slice(i, i + maxWords).join(" "));
+    const words = text.split(/\s+/);
+    if (words.length > maxWords){
+      for (let i = 0; i < words.length; i += maxWords){
+        const chunk = words.slice(i, i + maxWords).join(" ");
+        texts.push({text: chunk, xpath: generate_xpath(parent)});
+      }
+    } else {
+      texts.push({text: text, xpath: generate_xpath(parent)});
     }
-    chunks.forEach((chunk) => texts.push({ text: chunk, xpath: generate_xpath(parent) }));
-  }
+  });
 
   add_to_queue(texts);
 }
@@ -287,7 +294,7 @@ async function highlight_elements(payload) {
     thresholds = await get_settings("thresholds");
   } catch (err) {
     console.error("Failed", err);
-    thresholds = [0.35, 0.85];
+    thresholds = [35, 85];
   }
 
   const [low, high] = thresholds;
@@ -303,6 +310,7 @@ async function highlight_elements(payload) {
         XPathResult.FIRST_ORDERED_NODE_TYPE,
         null
       ).singleNodeValue;
+      log("highlight target ", el, "->", el?.textContent.slice(0,150));
       if (!el) {
         console.warn("Element not found with xpath: ", item.xpath);
         continue;
@@ -347,8 +355,8 @@ function reset_everything() {
 
   // AUDIO
 
-  work_queue = [];
-  duplicate_set = new Set();
+  work_queue.length = 0;
+  duplicate_set.clear();
   mutation_observer?.disconnect();
 }
 
