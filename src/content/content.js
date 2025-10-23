@@ -2,6 +2,8 @@ const work_queue = [];
 let processing = false;
 const duplicate_set = new Set();
 let mutation_observer;
+const xpaths_reset = [];
+let scheduler;
 
 let DEBUG = true;
 function log(...args) {
@@ -19,17 +21,19 @@ function init_content_script() {
   log("Initializing content script");
   start_mutation_observer();
   scrape_initial();
+  start_scheduler();
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "RESET_PAGE_CONTENT") {
-    console.log("RESETTING");
+    log("RESETTING");
     reset_everything();
     sendResponse({ status: "RESET_DONE" });
   } else if (message.type === "SCAN_AGAIN") {
-    console.log("SCANNING AGAIN");
-    scrape_initial();
-    sendResponse({ status: "COMPLETED" });
+    log("SCANNING AGAIN");
+    reset_everything();
+    init_content_script();
+    sendResponse({ status: "PROCESSING" });
   }
 });
 
@@ -44,6 +48,10 @@ const visibleObserver = new IntersectionObserver((entries) => {
 });
 
 function start_mutation_observer(){
+  if (mutation_observer){
+    mutation_observer.disconnect();
+  }
+
   mutation_observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
@@ -92,22 +100,32 @@ async function schedule_send_payload() {
     const processed_payload = response;
 
     log(`Batch processed; response ${Array.isArray(response?.text) ? response.text.length : 0} items`);
-    console.log("AFTER PROCESSING: ", processed_payload);
+    log("AFTER PROCESSING: ", processed_payload);
     highlight_elements(processed_payload);
   } catch (error) {
-    console.log(error);
+    log(error);
   }
 }
 
-setInterval(() => {
-  schedule_send_payload();
-}, 5000);
+function start_scheduler(){
+  if (scheduler) return;
+  scheduler = setInterval(() => {
+    schedule_send_payload();
+  }, 5000);
+}
+
+function stop_scheduler(){
+  if (scheduler) {
+    clearInterval(scheduler);
+    scheduler = null;
+  }
+}
 
 /* 
   IMAGES
   Scrape and Clean
-  DONE
 */
+
 function process_images(images) {
   const seen = new Set();
   for (let i = 0; i < images.length; i++) {
@@ -130,7 +148,6 @@ function process_images(images) {
 /* 
   TEXT
   Scrape and Clean
-  DONE
 */
 
 function process_text(tree) {
@@ -170,7 +187,7 @@ function process_text(tree) {
     if (!text) return;
 
     const wordCount = (text.match(/\b\w+\b/g) || []).length;
-    if (wordCount < 20) return;
+    if (wordCount < 5) return;
     if (text === text.toUpperCase()) return;
     if (TEXT_BLACKLIST.some((t) => text.toLowerCase().includes(t))) return;
 
@@ -184,34 +201,22 @@ function process_text(tree) {
     if (duplicate_set.has(norm)) return;
     duplicate_set.add(norm);
 
-    const maxWords = 150;
+    const maxWords = 300;
     const words = text.split(/\s+/);
+    const xpath = generate_xpath(parent);
     if (words.length > maxWords){
       for (let i = 0; i < words.length; i += maxWords){
         const chunk = words.slice(i, i + maxWords).join(" ");
-        texts.push({text: chunk, xpath: generate_xpath(parent)});
+        texts.push({text: chunk, xpath: xpath});
       }
     } else {
-      texts.push({text: text, xpath: generate_xpath(parent)});
+      texts.push({text: text, xpath: xpath});
+      xpaths_reset.push(xpath);
     }
   });
 
   add_to_queue(texts);
 }
-
-/* 
-  VIDEO
-  Scrape and Clean
-  DONE
-*/
-function process_videos(videos) {}
-
-/* 
-  AUDIO
-  Scrape and Clean
-  DONE
-*/
-function process_audio(audio) {}
 
 // element: a html node
 function generate_xpath(element) {
@@ -252,25 +257,63 @@ function generate_xpath(element) {
 SCRAPE HTML ELEMENTS:
 
 TEXT: DONE
-IMAGES: DONE
+IMAGES: NOT DONE
 VIDEO: NOT DONE
 AUDIO: NOT DONE
 */
 
 function scrape_initial() {
   log("Running initial scrape on page load")
-  // IMAGES
-  //process_images(images);
 
-  // TEXT
   process_text(document.body);
   log(`Initial scrape complete — queue now has ${work_queue.length} items`);
+}
 
-  // VIDEO
-  // process_video(video);
+/* 
+Create and add tooltips.
+*/
 
-  // AUDIO
-  // process_audio(audio);
+const tooltipEl = document.createElement("div");
+tooltipEl.id = "aletheia-tooltip";
+Object.assign(tooltipEl.style, {
+  position: "fixed",
+  padding: "6px 10px",
+  borderRadius: "4px",
+  fontSize: "14px",
+  background: "rgba(0,0,0,0.85)",
+  color: "#fff",
+  maxWidth: "300px",
+  whiteSpace: "pre-wrap",
+  pointerEvents: "none",
+  visibility: "hidden",
+  opacity: "0",
+  transition: "opacity 0.2s",
+  zIndex: "999999"
+});
+
+document.body.appendChild(tooltipEl);
+function showTooltipFor(el, text) {
+  const rect = el.getBoundingClientRect();
+  tooltipEl.textContent = text;
+  tooltipEl.style.left = `${rect.left + rect.width / 2}px`;
+  tooltipEl.style.top  = `${rect.top - 10}px`;
+  tooltipEl.style.transform = "translate(-50%, -100%)";
+  tooltipEl.style.visibility = "visible";
+  tooltipEl.style.opacity = "1";
+}
+
+function hideTooltip() {
+  tooltipEl.style.opacity = "0";
+  tooltipEl.style.visibility = "hidden";
+}
+
+function removeGlobalTooltip() {
+  if (tooltipEl && tooltipEl.parentNode) {
+    tooltipEl.style.opacity = "0";
+    tooltipEl.style.visibility = "hidden";
+    tooltipEl.parentNode.removeChild(tooltipEl);
+  }
+  log("Tooltip removed from DOM");
 }
 
 /*
@@ -299,6 +342,10 @@ async function highlight_elements(payload) {
 
   const [low, high] = thresholds;
 
+  let aiCount = 0;
+  let humanCount = 0;
+  let middleCount = 0;
+
   for (const item of payload.text) {
     try {
       if (!item || !item.xpath) continue;
@@ -316,18 +363,47 @@ async function highlight_elements(payload) {
         continue;
       }
 
+      el.addEventListener("mouseenter", (e) => {
+        showTooltipFor(
+          el,
+          item.aiScore > high
+            ? `Item is most likely AI.\nAI: ${item.aiScore.toFixed(2)}%\nHuman: ${item.humanScore.toFixed(2)}%`
+            : item.aiScore > low
+            ? `Item could be AI, proceed with caution.\nAI: ${item.aiScore.toFixed(2)}%\nHuman: ${item.humanScore.toFixed(2)}%`
+            : `Item is most likely not AI.\nAI: ${item.aiScore.toFixed(2)}%\nHuman: ${item.humanScore.toFixed(2)}%`
+        );
+      });
+      
+      el.addEventListener("mouseleave", hideTooltip);
+
       if (item.aiScore > high) {
+        aiCount += 1;
         el.style.setProperty("border", "5px solid red", "important");
       } else if (item.aiScore > low) {
+        middleCount += 1;
         el.style.setProperty("border", "5px solid yellow", "important");
       } else {
+        humanCount += 1;
         el.style.setProperty("border", "5px solid green", "important");
       }
+
     } catch (err) {
       console.error("Error", err, item);
     }
   }
 
+  chrome.storage.local.get("state", ({state}) => {
+    const newState = {
+      aiPosCount: aiCount,
+      aiSomeCount: middleCount,
+      humanCount: humanCount,
+      startedAt: state.startedAt,
+      status: state.status,
+      tabID: state.tabID
+    }
+
+    chrome.storage.local.set({state: newState});
+  });
 
 	log("Highlighting finished, processing flag reset");
 
@@ -336,18 +412,19 @@ async function highlight_elements(payload) {
 
 function reset_everything() {
   // TEXT
-  // TO DO: FIGURE OUT HOW TO RESET EVEYRTHING WITHOUT GLOBAL PAYLOAD
+  for (const item of xpaths_reset) {
+    const el = document.evaluate(
+      item,
+      document,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    ).singleNodeValue;
 
-  // for (const item of payloadTexts.data) {
-  //   const el = document.evaluate(
-  //     item.xpath,
-  //     document,
-  //     null,
-  //     XPathResult.FIRST_ORDERED_NODE_TYPE,
-  //     null
-  //   ).singleNodeValue;
-  //   el.style.setProperty("border", "none", "important");
-  // }
+    if (!el) continue;
+
+    el.style.setProperty("border", "none", "important");
+  }
 
   // IMAGES
 
@@ -358,6 +435,8 @@ function reset_everything() {
   work_queue.length = 0;
   duplicate_set.clear();
   mutation_observer?.disconnect();
+  stop_scheduler();
+  removeGlobalTooltip();
 }
 
 async function get_settings(param){

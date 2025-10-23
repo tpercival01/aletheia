@@ -28,10 +28,8 @@ async function runBatchPrediction(data) {
         console.log(text_str, " caused error: ", err);
       }
 
-      const maskArr = new Array(encIds.length).fill(1);
       const idsT = tf.tensor2d([encIds], [1, encIds.length], "int32");
       const maskT = tf.onesLike(idsT);
-      //const maskT = tf.tensor2d([maskArr], [1, encIds.length], "int32");
 
       const out = model.execute({
         input_ids: idsT,
@@ -116,6 +114,7 @@ let tabState = {
   startedAt: null,
   aiPosCount: 0,
   aiSomeCount: 0,
+  aiHumanCount: 0
 };
 
 chrome.storage.local.set({ state: tabState });
@@ -137,8 +136,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const response = await process_payload(message.payload);
           sendResponse(response);
           tabState.status = "Completed";
-          // tabState.aiPosCount = payload.aiPosCount;
-          // tabState.aiSomeCount = payload.aiSomeCount;
           chrome.storage.local.set({ state: tabState });
           change_popup("Completed");
         } catch (err) {
@@ -251,7 +248,7 @@ async function call_to_scan_again() {
 
     tabState = {
       tabID: tab.id,
-      status: "Completed",
+      status: "Processing",
       startedAt: null,
     };
     chrome.storage.local.set({ state: tabState });

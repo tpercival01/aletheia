@@ -104,12 +104,19 @@ function checkPopupState(stateObj) {
 }
 
 function update_results(changes){
-  const listItemOne = document.createElement("li");
-  listItemOne.innerHTML = `${changes.state.newValue.aiPosCount} elements are 90% likely to be AI`
-  const listItemTwo = document.createElement("li");
-  listItemTwo.innerHTML = `${changes.state.newValue.aiSomeCount} elements are 50% likely to be AI`
-  resultsList.appendChild(listItemOne);
-  resultsList.appendChild(listItemTwo);
+  if (changes.state.newValue.aiPosCount || changes.state.newValue.aiSomeCount || changes.state.newValue.humanCount){
+    const listItemOne = document.createElement("li");
+    listItemOne.innerHTML = `${changes.state.newValue.aiPosCount} elements are likely to be AI`
+    const listItemTwo = document.createElement("li");
+    listItemTwo.innerHTML = `${changes.state.newValue.aiSomeCount} elements are potentially AI`
+    const listItemThree = document.createElement("li");
+    listItemThree.innerHTML = `${changes.state.newValue.humanCount} elements are unlikely to be AI`
+    resultsList.appendChild(listItemOne);
+    resultsList.appendChild(listItemTwo);
+    resultsList.appendChild(listItemThree);
+  } else{
+
+  }
 }
 
 function send_report_website(){
