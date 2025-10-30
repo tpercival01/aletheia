@@ -1,61 +1,96 @@
-import * as tf from "@tensorflow/tfjs";
-import { AutoTokenizer, cat } from "@xenova/transformers";
+// import * as tf from "@tensorflow/tfjs";
+// import { pipeline } from "@xenova/transformers";
+import { pipeline } from "@huggingface/transformers";
 
 const REPO_ID = "tpercival/distilbert_social_media";
 const MODEL_URL = `https://huggingface.co/${REPO_ID}/resolve/main/model.json`;
 
-const tokenizerP = AutoTokenizer.from_pretrained(REPO_ID);
-const modelP = tf.loadGraphModel(MODEL_URL);
+class PipelineSingleton {
+  static task = "text-classification";
+  static model = "tpercival/distilbert_social_media";
+  static instance = null;
 
-async function runBatchPrediction(data) {
+  static async getInstance(progress_callback = null) {
+    this.instance ??= pipeline(this.task, this.model, { progress_callback });
+
+    return this.instance;
+  }
+}
+
+const runBatchPrediction = async (data) => {
+  console.log("BEFORE PROCESSING: ", data);
+
   if (!data?.text?.data?.length) return [];
-
-  const tokenizer = await tokenizerP;
-  const model = await modelP;
+  let model = await PipelineSingleton.getInstance();
+  const sentences = data.text.data;
 
   const results = [];
-  const sentences = data.text.data;
-  console.log("PAYLOAD BEFORE PREDICTION: ", sentences);
-
   for (const text of sentences) {
-    try {
-      let text_str = text.text;
-      let encIds;
-
-      try {
-        encIds = await tokenizer.encode(text_str);
-      } catch(err){
-        console.log(text_str, " caused error: ", err);
-      }
-
-      const idsT = tf.tensor2d([encIds], [1, encIds.length], "int32");
-      const maskT = tf.onesLike(idsT);
-
-      const out = model.execute({
-        input_ids: idsT,
-        attention_mask: maskT,
-      });
-
-      const logits = Array.isArray(out) ? out[0] : out;
-      const probs = tf.softmax(logits, -1);
-      const [human, ai] = await probs.data();
-      results.push({ 
-        aiScore: ai * 100,
-        humanScore: human * 100,
-      });
-
-      idsT.dispose();
-      maskT.dispose();
-      logits.dispose();
-      probs.dispose();
-    } catch (err) {
-      console.error("Prediction error:", err);
-      results.push({ error: err.message });
+    let result = await model(text.text);
+    console.log(result, result[0]);
+    if (result[0].label == "human") {
+      results.push({ ...text, HUMAN: result[0].score });
+    } else {
+      results.push({ ...text, AI: result[0].score });
     }
   }
 
+  console.log("AFTER PROCESSING: ", results);
   return results;
-}
+};
+
+// const tokenizerP = AutoTokenizer.from_pretrained(REPO_ID);
+// const modelP = tf.loadGraphModel(MODEL_URL);
+
+// async function runBatchPrediction(data) {
+//   if (!data?.text?.data?.length) return [];
+
+//   const tokenizer = await tokenizerP;
+//   const model = await modelP;
+
+//   const results = [];
+//   const sentences = data.text.data;
+//   console.log("PAYLOAD BEFORE PREDICTION: ", sentences);
+
+//   for (const text of sentences) {
+//     try {
+//       let text_str = text.text;
+//       let encIds;
+
+//       try {
+//         encIds = await tokenizer.encode(text_str);
+//       } catch (err) {
+//         console.log(text_str, " caused error: ", err);
+//       }
+
+//       const idsT = tf.tensor2d([encIds], [1, encIds.length], "int32");
+//       const maskT = tf.onesLike(idsT);
+
+//       const out = model.execute({
+//         input_ids: idsT,
+//         attention_mask: maskT,
+//       });
+
+//       const logits = Array.isArray(out) ? out[0] : out;
+//       const probs = tf.softmax(logits, -1);
+//       const [human, ai] = await probs.data();
+//       results.push({
+//         aiScore: ai * 100,
+//         humanScore: human * 100,
+//       });
+
+//       idsT.dispose();
+//       maskT.dispose();
+//       logits.dispose();
+//       probs.dispose();
+//     } catch (err) {
+//       console.error("Prediction error:", err);
+//       results.push({ error: err.message });
+//     }
+//   }
+
+//   return results;
+// }
 
 let isEnabled;
 
@@ -71,33 +106,33 @@ chrome.runtime.onInstalled.addListener(() => {
     const default_settings = {
       thresholds: [35, 85],
       colours: {
-          human: "green",
-          uncertain: "yellow",
-          ai: "red",
+        human: "green",
+        uncertain: "yellow",
+        ai: "red",
       },
       resultStyle: "badge",
       contentTypes: {
-          text: true,
-          images: false,
-          video: false,
-          audio: false
+        text: true,
+        images: false,
+        video: false,
+        audio: false,
       },
       pageOverview: true,
       performance: "balanced",
       siteControl: {
-          whitelist: [],
-          blacklist: [],
+        whitelist: [],
+        blacklist: [],
       },
     };
-    
+
     chrome.storage.local.get("settings", (result) => {
-        if (!result.settings){
-            chrome.storage.local.set({settings: default_settings}, () => {
-                console.log(default_settings);
-            });
-        } else {
-            console.log(result.settings);
-        }
+      if (!result.settings) {
+        chrome.storage.local.set({ settings: default_settings }, () => {
+          console.log(default_settings);
+        });
+      } else {
+        console.log(result.settings);
+      }
     });
   });
 });
@@ -114,7 +149,7 @@ let tabState = {
   startedAt: null,
   aiPosCount: 0,
   aiSomeCount: 0,
-  aiHumanCount: 0
+  aiHumanCount: 0,
 };
 
 chrome.storage.local.set({ state: tabState });
@@ -181,12 +216,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 async function process_payload(payload) {
   // TEXT
-  const results = await runBatchPrediction(payload);
-  const processedTexts = payload.text.data.map((obj, i) => ({
-    ...obj,
-    aiScore: results[i]["aiScore"],
-    humanScore: results[i]["humanScore"]
-  }));
+  const processedTexts = await runBatchPrediction(payload);
+  // const processedTexts = payload.text.data.map((obj, i) => ({
+  //   ...obj,
+  //   aiScore: results[i]["aiScore"],
+  //   humanScore: results[i]["humanScore"],
+  // }));
 
   // IMAGES
 
@@ -202,7 +237,7 @@ async function process_payload(payload) {
   // AUDIO
 
   return {
-    text: processedTexts
+    text: processedTexts,
   };
 }
 

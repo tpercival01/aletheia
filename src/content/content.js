@@ -38,8 +38,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 const visibleObserver = new IntersectionObserver((entries) => {
-  for (const entry of entries){
-    if (entry.isIntersecting){
+  for (const entry of entries) {
+    if (entry.isIntersecting) {
       process_text(entry.target);
       visibleObserver.unobserve(entry.target);
       log("IntersectionObserver: node visible ->", entry.target.tagName);
@@ -47,15 +47,18 @@ const visibleObserver = new IntersectionObserver((entries) => {
   }
 });
 
-function start_mutation_observer(){
-  if (mutation_observer){
+function start_mutation_observer() {
+  if (mutation_observer) {
     mutation_observer.disconnect();
   }
 
   mutation_observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
-        if (node.nodeType === Node.ELEMENT_NODE && node.matches("p, div, article, section")){
+        if (
+          node.nodeType === Node.ELEMENT_NODE &&
+          node.matches("p, div, article, section")
+        ) {
           visibleObserver.observe(node);
           log("MutationObserver: new node detected -> ", node.tagName);
         }
@@ -63,19 +66,18 @@ function start_mutation_observer(){
     }
   });
 
-  mutation_observer.observe(document.body, {childList: true, subtree: true});
+  mutation_observer.observe(document.body, { childList: true, subtree: true });
 }
 
 // chunks: array of media (texts, images, videos)
-function add_to_queue(chunks){
+function add_to_queue(chunks) {
   log(`Queue add: +${chunks.length}, total ${work_queue.length}`);
-  if (work_queue.length < 300){
-    for (const chunk of chunks){
+  if (work_queue.length < 300) {
+    for (const chunk of chunks) {
       work_queue.push(chunk);
     }
   }
 }
-
 
 async function schedule_send_payload() {
   log(`Scheduler tick — queue:${work_queue.length}, processing:${processing}`);
@@ -99,7 +101,11 @@ async function schedule_send_payload() {
 
     const processed_payload = response;
 
-    log(`Batch processed; response ${Array.isArray(response?.text) ? response.text.length : 0} items`);
+    log(
+      `Batch processed; response ${
+        Array.isArray(response?.text) ? response.text.length : 0
+      } items`
+    );
     log("AFTER PROCESSING: ", processed_payload);
     highlight_elements(processed_payload);
   } catch (error) {
@@ -107,14 +113,14 @@ async function schedule_send_payload() {
   }
 }
 
-function start_scheduler(){
+function start_scheduler() {
   if (scheduler) return;
   scheduler = setInterval(() => {
     schedule_send_payload();
   }, 5000);
 }
 
-function stop_scheduler(){
+function stop_scheduler() {
   if (scheduler) {
     clearInterval(scheduler);
     scheduler = null;
@@ -163,10 +169,19 @@ function process_text(tree) {
   `;
 
   const TEXT_BLACKLIST = [
-    "promoted", "click here", "read more", "share",
-    "login", "sign in", "submit", "privacy policy",
-    "user agreement", "all rights reserved", "learn more",
-    "terms and conditions", "t&cs apply"
+    "promoted",
+    "click here",
+    "read more",
+    "share",
+    "login",
+    "sign in",
+    "submit",
+    "privacy policy",
+    "user agreement",
+    "all rights reserved",
+    "learn more",
+    "terms and conditions",
+    "t&cs apply",
   ];
 
   const walker = document.createTreeWalker(tree, NodeFilter.SHOW_TEXT);
@@ -176,13 +191,13 @@ function process_text(tree) {
     const parent = node.parentElement;
     if (!parent) continue;
 
-    if (parent.matches(EXCLUDE_SELECTORS) || parent.closest(EXCLUDE_SELECTORS)) continue;
+    if (parent.matches(EXCLUDE_SELECTORS) || parent.closest(EXCLUDE_SELECTORS))
+      continue;
     const existing = parentTexts.get(parent) || "";
     parentTexts.set(parent, existing + " " + node.textContent);
   }
 
-  parentTexts.forEach((rawText, parent) => { 
-
+  parentTexts.forEach((rawText, parent) => {
     const text = rawText.replace(/\s+/g, " ").trim();
     if (!text) return;
 
@@ -192,7 +207,12 @@ function process_text(tree) {
     if (TEXT_BLACKLIST.some((t) => text.toLowerCase().includes(t))) return;
 
     const style = getComputedStyle(parent);
-    if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") return;
+    if (
+      style.display === "none" ||
+      style.visibility === "hidden" ||
+      style.opacity === "0"
+    )
+      return;
 
     const rect = parent.getBoundingClientRect();
     if (rect.width < 100 || rect.height < 20) return;
@@ -204,13 +224,13 @@ function process_text(tree) {
     const maxWords = 300;
     const words = text.split(/\s+/);
     const xpath = generate_xpath(parent);
-    if (words.length > maxWords){
-      for (let i = 0; i < words.length; i += maxWords){
+    if (words.length > maxWords) {
+      for (let i = 0; i < words.length; i += maxWords) {
         const chunk = words.slice(i, i + maxWords).join(" ");
-        texts.push({text: chunk, xpath: xpath});
+        texts.push({ text: chunk, xpath: xpath });
       }
     } else {
-      texts.push({text: text, xpath: xpath});
+      texts.push({ text: text, xpath: xpath });
       xpaths_reset.push(xpath);
     }
   });
@@ -263,7 +283,7 @@ AUDIO: NOT DONE
 */
 
 function scrape_initial() {
-  log("Running initial scrape on page load")
+  log("Running initial scrape on page load");
 
   process_text(document.body);
   log(`Initial scrape complete — queue now has ${work_queue.length} items`);
@@ -288,7 +308,7 @@ Object.assign(tooltipEl.style, {
   visibility: "hidden",
   opacity: "0",
   transition: "opacity 0.2s",
-  zIndex: "999999"
+  zIndex: "999999",
 });
 
 document.body.appendChild(tooltipEl);
@@ -296,7 +316,7 @@ function showTooltipFor(el, text) {
   const rect = el.getBoundingClientRect();
   tooltipEl.textContent = text;
   tooltipEl.style.left = `${rect.left + rect.width / 2}px`;
-  tooltipEl.style.top  = `${rect.top - 10}px`;
+  tooltipEl.style.top = `${rect.top - 10}px`;
   tooltipEl.style.transform = "translate(-50%, -100%)";
   tooltipEl.style.visibility = "visible";
   tooltipEl.style.opacity = "1";
@@ -326,6 +346,7 @@ Audio: NOT DONE
 
 */
 async function highlight_elements(payload) {
+  log("raw payload: ", payload);
   log("Highlighting started for batch", payload.text?.length || 0);
   processing = false;
 
@@ -357,55 +378,61 @@ async function highlight_elements(payload) {
         XPathResult.FIRST_ORDERED_NODE_TYPE,
         null
       ).singleNodeValue;
-      log("highlight target ", el, "->", el?.textContent.slice(0,150));
+      log("highlight target ", el, "->", el?.textContent.slice(0, 150));
       if (!el) {
         console.warn("Element not found with xpath: ", item.xpath);
         continue;
+      }
+      let score;
+
+      if (item.AI) {
+        score = item.AI;
+      } else {
+        score = item.HUMAN;
       }
 
       el.addEventListener("mouseenter", (e) => {
         showTooltipFor(
           el,
-          item.aiScore > high
-            ? `Item is most likely AI.\nAI: ${item.aiScore.toFixed(2)}%\nHuman: ${item.humanScore.toFixed(2)}%`
-            : item.aiScore > low
-            ? `Item could be AI, proceed with caution.\nAI: ${item.aiScore.toFixed(2)}%\nHuman: ${item.humanScore.toFixed(2)}%`
-            : `Item is most likely not AI.\nAI: ${item.aiScore.toFixed(2)}%\nHuman: ${item.humanScore.toFixed(2)}%`
+          score > high
+            ? `Item is most likely AI.\nAI: ${score.toFixed(2)}`
+            : score > low
+            ? `Item could be AI, proceed with caution.\nAI: ${score.toFixed(2)}`
+            : `Item is most likely not AI.\nAI: ${score.toFixed(2)}`
         );
       });
-      
+
       el.addEventListener("mouseleave", hideTooltip);
 
-      if (item.aiScore > high) {
+      if (score > high) {
         aiCount += 1;
         el.style.setProperty("border", "5px solid red", "important");
-      } else if (item.aiScore > low) {
+      } else if (score > low) {
         middleCount += 1;
         el.style.setProperty("border", "5px solid yellow", "important");
       } else {
         humanCount += 1;
         el.style.setProperty("border", "5px solid green", "important");
       }
-
     } catch (err) {
       console.error("Error", err, item);
     }
   }
 
-  chrome.storage.local.get("state", ({state}) => {
+  chrome.storage.local.get("state", ({ state }) => {
     const newState = {
       aiPosCount: aiCount,
       aiSomeCount: middleCount,
       humanCount: humanCount,
       startedAt: state.startedAt,
       status: state.status,
-      tabID: state.tabID
-    }
+      tabID: state.tabID,
+    };
 
-    chrome.storage.local.set({state: newState});
+    chrome.storage.local.set({ state: newState });
   });
 
-	log("Highlighting finished, processing flag reset");
+  log("Highlighting finished, processing flag reset");
 
   schedule_send_payload();
 }
@@ -439,13 +466,13 @@ function reset_everything() {
   removeGlobalTooltip();
 }
 
-async function get_settings(param){
+async function get_settings(param) {
   const result = await chrome.storage.local.get("settings");
   const settings = result.settings;
-  
-  if (param == "all"){
+
+  if (param == "all") {
     return settings;
-  } else if (param == "thresholds"){
+  } else if (param == "thresholds") {
     return settings?.thresholds;
   }
 }

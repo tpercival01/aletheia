@@ -1,5 +1,3 @@
-import "./popup.css";
-
 const statusMessage = document.getElementById("status_message");
 
 const scanAgainButton = document.getElementById("scan_again");
@@ -8,28 +6,27 @@ const resetPageButton = document.getElementById("reset_button");
 const resultsBreakdown = document.getElementById("results_breakdown");
 const resultsList = document.getElementById("results_list");
 
-const dropdown = document.querySelector('.dropdown');
-const toggle = dropdown.querySelector('.dropdown_toggle');
-const menu = dropdown.querySelector('.dropdown_menu');
-
+const dropdown = document.querySelector(".dropdown");
+const toggle = dropdown.querySelector(".dropdown_toggle");
+const menu = dropdown.querySelector(".dropdown_menu");
 
 window.addEventListener("DOMContentLoaded", async () => {
-  const {state} = await chrome.storage.local.get("state");
+  const { state } = await chrome.storage.local.get("state");
   checkPopupState(state);
 
   // Handle export menu
-  toggle.addEventListener('click', e => {
+  toggle.addEventListener("click", (e) => {
     e.stopPropagation();
-    const isOpen = dropdown.classList.toggle('open');
-    toggle.setAttribute('aria-expanded', isOpen);
+    const isOpen = dropdown.classList.toggle("open");
+    toggle.setAttribute("aria-expanded", isOpen);
   });
 
-  menu.addEventListener('click', e => e.stopPropagation());
+  menu.addEventListener("click", (e) => e.stopPropagation());
 
-  document.addEventListener('click', () => {
-    if (dropdown.classList.contains('open')) {
-      dropdown.classList.remove('open');
-      toggle.setAttribute('aria-expanded', 'false');
+  document.addEventListener("click", () => {
+    if (dropdown.classList.contains("open")) {
+      dropdown.classList.remove("open");
+      toggle.setAttribute("aria-expanded", "false");
     }
   });
 
@@ -47,12 +44,12 @@ window.addEventListener("DOMContentLoaded", async () => {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local") {
     checkPopupState(changes.state.newValue);
-    if (changes.state.newValue.status == "Completed"){
+    if (changes.state.newValue.status == "Completed") {
       resultsList.innerHTML = "";
       update_results(changes);
       dropdown.classList.remove("hidden");
       resultsBreakdown.classList.remove("hidden");
-   }
+    }
   }
 });
 
@@ -71,7 +68,7 @@ scanAgainButton.addEventListener("click", async () => {
       type: "SCAN_AGAIN",
       source: "popup",
     });
-    console.log("SCANNED AGAIN")
+    console.log("SCANNED AGAIN");
     updateUI(response);
   } catch (error) {
     console.error("Error sending SCAN_AGAIN message: ", error);
@@ -103,36 +100,37 @@ function checkPopupState(stateObj) {
   resetPageButton.className = "";
 }
 
-function update_results(changes){
-  if (changes.state.newValue.aiPosCount || changes.state.newValue.aiSomeCount || changes.state.newValue.humanCount){
+function update_results(changes) {
+  if (
+    changes.state.newValue.aiPosCount ||
+    changes.state.newValue.aiSomeCount ||
+    changes.state.newValue.humanCount
+  ) {
     const listItemOne = document.createElement("li");
-    listItemOne.innerHTML = `${changes.state.newValue.aiPosCount} elements are likely to be AI`
+    listItemOne.innerHTML = `${changes.state.newValue.aiPosCount} elements are likely to be AI`;
     const listItemTwo = document.createElement("li");
-    listItemTwo.innerHTML = `${changes.state.newValue.aiSomeCount} elements are potentially AI`
+    listItemTwo.innerHTML = `${changes.state.newValue.aiSomeCount} elements are potentially AI`;
     const listItemThree = document.createElement("li");
-    listItemThree.innerHTML = `${changes.state.newValue.humanCount} elements are unlikely to be AI`
+    listItemThree.innerHTML = `${changes.state.newValue.humanCount} elements are unlikely to be AI`;
     resultsList.appendChild(listItemOne);
     resultsList.appendChild(listItemTwo);
     resultsList.appendChild(listItemThree);
-  } else{
-
+  } else {
   }
 }
 
-function send_report_website(){
-  console.log("Sending report to website.")
+function send_report_website() {
+  console.log("Sending report to website.");
 }
 
-function download_report(){
-
+function download_report() {
   // Need to decide what the report will look like, contain, etc.
   // Probably just a bigger summary, maybe some examples.
 
-  console.log("Downloading full report.")
+  console.log("Downloading full report.");
 }
-
 
 // Open settings page
-document.getElementById('settings_button').onclick = (e) => {
+document.getElementById("settings_button").onclick = (e) => {
   window.location.href = chrome.runtime.getURL("ui/settings/settings.html");
-}
+};

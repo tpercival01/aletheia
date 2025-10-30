@@ -1,43 +1,44 @@
-const path = require("path");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
+import path from "path";
+import { fileURLToPath } from "url";
 
-module.exports = {
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import CopyPlugin from "copy-webpack-plugin";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const config = {
   mode: "development",
-  optimization: {minimize: false},
-  devtool: "cheap-module-source-map",
+  devtool: "inline-source-map",
   entry: {
-    background: "./src/background/background.js",
-    content: "./src/content/content.js",
+    background: {
+      import: "./src/background/background.js",
+      chunkLoading: `import-scripts`,
+    },
     popup: "./src/ui/popup/popup.js",
-    settings: "./src/ui/settings/settings.js",
-    colours_labels: "./src/ui/settings/colours_labels.js",
-    content_types: "./src/ui/settings/content_types.js",
-    page_overview: "./src/ui/settings/page_overview.js",
-    result_style: "./src/ui/settings/result_style.js",
-    site_control: "./src/ui/settings/site_control.js",
-    speed_accuracy: "./src/ui/settings/speed_accuracy.js",
-    threshold: "./src/ui/settings/threshold.js",
+    content: "./src/content/content.js",
   },
   output: {
-    filename: "[name].bundle.js",
-    path: path.resolve(__dirname, "extension"),
-  },
-  module: {
-    rules: [
-      {
-        test: /\.css$/i,
-        use: ["style-loader", "css-loader"],
-      },
-    ],
+    path: path.resolve(__dirname, "build"),
+    filename: "[name].js",
   },
   plugins: [
-    new CopyWebpackPlugin({
+    new HtmlWebpackPlugin({
+      template: "./src/ui/popup/popup.html",
+      filename: "popup.html",
+    }),
+    new CopyPlugin({
       patterns: [
-        { from: "src/ui", to: "ui", globOptions: { ignore: ["**/*.js"] } },
-        { from: "src/icons", to: "icons" },
-        { from: "src/manifest.json", to: "manifest.json" },
+        {
+          from: "public",
+          to: ".", // Copies to build folder
+        },
+        {
+          from: "src/ui/popup/popup.css",
+          to: "popup.css",
+        },
       ],
     }),
   ],
-  resolve: { fallback: { fs: false } }
 };
+
+export default config;

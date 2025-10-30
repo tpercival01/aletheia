@@ -5,14 +5,17 @@
   "author": "Thomas Percival",
   "license": "MIT",
   "scripts": {
-    "build": "webpack --mode production"
+    "build": "webpack"
   },
+  "type": "module",
   "dependencies": {
     "@tensorflow/tfjs": "^4.10.0",
-    "@xenova/transformers": "2.5.1"
+    "@xenova/transformers": "2.5.1",
+    "@huggingface/transformers": "^3.4.0"
   },
   "devDependencies": {
-    "copy-webpack-plugin": "^13.0.1",
+    "copy-webpack-plugin": "^11.0.0",
+    "html-webpack-plugin": "^5.5.1",
     "css-loader": "^7.1.2",
     "style-loader": "^4.0.0",
     "webpack": "^5.88.2",
