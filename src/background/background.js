@@ -1,33 +1,46 @@
-// import * as tf from "@tensorflow/tfjs";
-// import { pipeline } from "@xenova/transformers";
 import { pipeline } from "@huggingface/transformers";
 
-const REPO_ID = "tpercival/distilbert_social_media";
-const MODEL_URL = `https://huggingface.co/${REPO_ID}/resolve/main/model.json`;
+let DEBUG = true;
+function log(...args) {
+  if (!DEBUG) return;
+  console.log("%c[Aletheia]", "color: #7d57ff; font-weight: bold;", ...args);
+}
 
-class PipelineSingleton {
-  static task = "text-classification";
-  static model = "tpercival/distilbert_social_media";
-  static instance = null;
+const TEXT_REPO_ID = "tpercival/distilbert_social_media";
 
-  static async getInstance(progress_callback = null) {
+class PipelineManager {
+  constructor(task, model) {
+    this.task = task;
+    this.model = model;
+    this.instance = null;
+  }
+
+  async getInstance(progress_callback = null) {
     this.instance ??= pipeline(this.task, this.model, { progress_callback });
 
     return this.instance;
   }
+
+  reset(task, model) {
+    this.task = task;
+    this.model = model;
+    this.instance = null;
+  }
 }
 
-const runBatchPrediction = async (data) => {
-  console.log("BEFORE PROCESSING: ", data);
+const runTextPrediction = async (data) => {
+  log("BEFORE PROCESSING: ", data);
 
   if (!data?.text?.data?.length) return [];
-  let model = await PipelineSingleton.getInstance();
+  const model = new PipelineManager("text-classification", TEXT_REPO_ID);
+  const classifier = await model.getInstance();
   const sentences = data.text.data;
 
   const results = [];
   for (const text of sentences) {
-    let result = await model(text.text);
-    console.log(result, result[0]);
+    let result = await classifier(text.text);
+    log(result, result[0]);
+
     if (result[0].label == "human") {
       results.push({ ...text, HUMAN: result[0].score });
     } else {
@@ -35,62 +48,9 @@ const runBatchPrediction = async (data) => {
     }
   }
 
-  console.log("AFTER PROCESSING: ", results);
+  log("AFTER PROCESSING: ", results);
   return results;
 };
-
-// const tokenizerP = AutoTokenizer.from_pretrained(REPO_ID);
-// const modelP = tf.loadGraphModel(MODEL_URL);
-
-// async function runBatchPrediction(data) {
-//   if (!data?.text?.data?.length) return [];
-
-//   const tokenizer = await tokenizerP;
-//   const model = await modelP;
-
-//   const results = [];
-//   const sentences = data.text.data;
-//   console.log("PAYLOAD BEFORE PREDICTION: ", sentences);
-
-//   for (const text of sentences) {
-//     try {
-//       let text_str = text.text;
-//       let encIds;
-
-//       try {
-//         encIds = await tokenizer.encode(text_str);
-//       } catch (err) {
-//         console.log(text_str, " caused error: ", err);
-//       }
-
-//       const idsT = tf.tensor2d([encIds], [1, encIds.length], "int32");
-//       const maskT = tf.onesLike(idsT);
-
-//       const out = model.execute({
-//         input_ids: idsT,
-//         attention_mask: maskT,
-//       });
-
-//       const logits = Array.isArray(out) ? out[0] : out;
-//       const probs = tf.softmax(logits, -1);
-//       const [human, ai] = await probs.data();
-//       results.push({
-//         aiScore: ai * 100,
-//         humanScore: human * 100,
-//       });
-
-//       idsT.dispose();
-//       maskT.dispose();
-//       logits.dispose();
-//       probs.dispose();
-//     } catch (err) {
-//       console.error("Prediction error:", err);
-//       results.push({ error: err.message });
-//     }
-//   }
-
-//   return results;
-// }
 
 let isEnabled;
 
@@ -128,10 +88,10 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.storage.local.get("settings", (result) => {
       if (!result.settings) {
         chrome.storage.local.set({ settings: default_settings }, () => {
-          console.log(default_settings);
+          log(default_settings);
         });
       } else {
-        console.log(result.settings);
+        log(result.settings);
       }
     });
   });
@@ -174,14 +134,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           chrome.storage.local.set({ state: tabState });
           change_popup("Completed");
         } catch (err) {
-          console.error("error ", err);
+          log("error ", err);
         }
       })();
 
       return true;
 
     case "SCAN_AGAIN":
-      console.log("Asking content to scan again");
+      log("Asking content to scan again");
 
       tabState = {
         tabID: tabState.tabID,
@@ -195,7 +155,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
 
     case "RESET_PAGE_POPUP":
-      console.log("Resetting page and all contents.");
+      log("Resetting page and all contents.");
       tabState = {
         tabID: tabState.tabID,
         status: "Resetting",
@@ -208,7 +168,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
 
     case "GET_POPUP_STATE":
-      console.log("Getting current state");
+      log("Getting current state");
       sendResponse(tabState);
       return true;
   }
@@ -216,12 +176,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 async function process_payload(payload) {
   // TEXT
-  const processedTexts = await runBatchPrediction(payload);
-  // const processedTexts = payload.text.data.map((obj, i) => ({
-  //   ...obj,
-  //   aiScore: results[i]["aiScore"],
-  //   humanScore: results[i]["humanScore"],
-  // }));
+  const processedTexts = await runTextPrediction(payload);
 
   // IMAGES
 
@@ -242,7 +197,7 @@ async function process_payload(payload) {
 }
 
 function change_popup(process) {
-  console.log(process);
+  log(process);
   switch (process) {
     case "Processing":
       chrome.action.setBadgeText({ text: "..." });
