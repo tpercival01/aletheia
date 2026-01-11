@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Deepfake content across images, video, audio, and text is increasingly convincing and poses a serious threat to digital trust. **aletheia** is a browser extension and educational toolkit designed to detect and demystify AI-generated media in real-time and teach users how to spot deepfakes or AI-generated content. Custom TensorFlow models trained on open-source datasets power lightweight in-browser scans combined with on-demand server analysis. An interactive suite of web modules, slide presentations, and quizzes builds user skills in deepfake detection. Research will investigate model architectures that balance accuracy and precision with computational cost, explore combined client and server design for optimal speed and reliability, and measure the impact of interactive learning materials on the ability of users to recognize manipulated content. The expected outcome is an integrated platform that flags suspect media and empowers users to counter AI-driven misinformation.
+Deepfake content across images, video, audio, and text is increasingly convincing and poses a serious threat to digital trust. **Aletheia** is a browser extension and educational toolkit designed to detect and demystify AI-generated media in real-time and teach users how to spot deepfakes or AI-generated content. Custom TensorFlow models trained on open-source datasets power lightweight in-browser scans combined with on-demand server analysis. An interactive companion website with a suite of web modules, slide presentations, and quizzes builds user skills in deepfake detection. 
 
 ## Features
 
