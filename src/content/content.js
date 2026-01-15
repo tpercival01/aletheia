@@ -383,22 +383,19 @@ async function highlight_elements(payload) {
         console.warn("Element not found with xpath: ", item.xpath);
         continue;
       }
-      let score;
 
-      if (item.AI) {
-        score = item.AI;
-      } else {
-        score = item.HUMAN;
-      }
+      const aiScore = item.AI ?? 0;
+      const humanScore = item.HUMAN ?? 0;
+      const score = Math.max(aiScore, humanScore);
 
       el.addEventListener("mouseenter", (e) => {
         showTooltipFor(
           el,
           score > high
-            ? `Item is most likely AI.\nAI: ${score.toFixed(2)}`
+            ? `Item is most likely AI.\nAI: ${aiScore.toFixed(2)}\nHuman: ${humanScore.toFixed(2)}\n`
             : score > low
-            ? `Item could be AI, proceed with caution.\nAI: ${score.toFixed(2)}`
-            : `Item is most likely not AI.\nAI: ${score.toFixed(2)}`
+            ? `Item could be AI, proceed with caution.\nAI: ${aiScore.toFixed(2)}\nHuman: ${humanScore.toFixed(2)}\n`
+            : `Item is most likely not AI.\nAI: ${aiScore.toFixed(2)}\nHuman: ${humanScore.toFixed(2)}\n`
         );
       });
 
