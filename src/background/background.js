@@ -9,21 +9,23 @@ function log(...args) {
 const TEXT_REPO_ID = "tpercival/distilbert_social_media";
 
 class PipelineManager {
-  constructor(task, model) {
+  constructor(task, model, dtype = "q8") {
     this.task = task;
     this.model = model;
+    this.dtype = dtype;
     this.instance = null;
   }
 
   async getInstance(progress_callback = null) {
-    this.instance ??= pipeline(this.task, this.model, { progress_callback });
+    this.instance ??= pipeline(this.task, this.model, { progress_callback, dtype: this.dtype, });
 
     return this.instance;
   }
 
-  reset(task, model) {
+  reset(task, model, dtype = "q8") {
     this.task = task;
     this.model = model;
+    this.dtype = dtype;
     this.instance = null;
   }
 }
@@ -32,7 +34,7 @@ const runTextPrediction = async (data) => {
   log("BEFORE PROCESSING: ", data);
 
   if (!data?.text?.data?.length) return [];
-  const model = new PipelineManager("text-classification", TEXT_REPO_ID);
+  const model = new PipelineManager("text-classification", TEXT_REPO_ID, "q8");
   const classifier = await model.getInstance();
   const sentences = data.text.data;
 

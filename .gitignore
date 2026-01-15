@@ -3,5 +3,6 @@ extension
 .env
 __pycache__
 node_modules
-*.json
+package-lock.json
+package.json
 *.csv
