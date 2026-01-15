@@ -44,9 +44,9 @@ const runTextPrediction = async (data) => {
     log(result, result[0]);
 
     if (result[0].label == "human") {
-      results.push({ ...text, HUMAN: result[0].score });
+      results.push({ ...text, HUMAN: result[0].score, AI: (1 - result[0].score)});
     } else {
-      results.push({ ...text, AI: result[0].score });
+      results.push({ ...text, AI: result[0].score, HUMAN: (1 - result[0].score)});
     }
   }
 

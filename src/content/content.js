@@ -383,34 +383,44 @@ async function highlight_elements(payload) {
         console.warn("Element not found with xpath: ", item.xpath);
         continue;
       }
+      const aiScore = item.AI || 0;
+      const humanScore = item.HUMAN || 0;
 
-      const aiScore = item.AI ?? 0;
-      const humanScore = item.HUMAN ?? 0;
-      const score = Math.max(aiScore, humanScore);
+      const isAI = aiScore > humanScore;
+      const winningScore = isAI ? aiScore : humanScore;
+
+      const highThreshold = high / 100;
+      const lowThreshold = low / 100;
 
       el.addEventListener("mouseenter", (e) => {
-        showTooltipFor(
-          el,
-          score > high
-            ? `Item is most likely AI.\nAI: ${aiScore.toFixed(2)}\nHuman: ${humanScore.toFixed(2)}\n`
-            : score > low
-            ? `Item could be AI, proceed with caution.\nAI: ${aiScore.toFixed(2)}\nHuman: ${humanScore.toFixed(2)}\n`
-            : `Item is most likely not AI.\nAI: ${aiScore.toFixed(2)}\nHuman: ${humanScore.toFixed(2)}\n`
-        );
+        let message = "";
+
+        if (isAI && winningScore >= highThreshold) {
+          message = "Item is most likely AI.";
+        } else if (isAI && winningScore >= lowThreshold) {
+          message = "Item could be AI; proceed with caution.";
+        } else {
+          message = "Item is most likely human-authored.";
+        }
+
+        const distribution = `\nAI: ${(aiScore * 100).toFixed(1)}% | Human: ${(
+          humanScore * 100
+        ).toFixed(1)}%`;
+
+        showTooltipFor(el, message + distribution);
       });
 
       el.addEventListener("mouseleave", hideTooltip);
 
-      if (score > high) {
+      if (isAI && winningScore >= highThreshold) {
         aiCount += 1;
         el.style.setProperty("border", "5px solid red", "important");
-      } else if (score > low) {
+    } else if (isAI && winningScore >= lowThreshold) {
         middleCount += 1;
         el.style.setProperty("border", "5px solid yellow", "important");
-      } else {
+    } else {
         humanCount += 1;
-        el.style.setProperty("border", "5px solid green", "important");
-      }
+    }
     } catch (err) {
       console.error("Error", err, item);
     }
