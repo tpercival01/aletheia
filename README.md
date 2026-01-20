@@ -38,11 +38,6 @@ TO RUN ALETHEIA, YOU WILL NEED TO SET YOUR CHROME EXTENSIONS TO DEVELOPER MODE
 5. Once done, you should see a "Build" folder.
 6. Now go back to chrome, click "Load unpacked" and select that build folder.
 
-## Usage
-
-
-## Project Structure
-
 ## Contributing
 
 This repository primarily serves as the codebase for an MSc dissertation project. While formal contributions are not expected, feedback or suggestions are welcome.
