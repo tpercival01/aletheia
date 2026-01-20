@@ -5,7 +5,7 @@ let mutation_observer;
 const xpaths_reset = [];
 let scheduler;
 
-let DEBUG = true;
+let DEBUG = false;
 function log(...args) {
   if (!DEBUG) return;
   console.log("%c[Aletheia]", "color: #7d57ff; font-weight: bold;", ...args);
@@ -84,11 +84,11 @@ async function schedule_send_payload() {
   if (processing) return;
   if (work_queue.length === 0) return;
 
-  const batch = work_queue.splice(0, 50);
+  const batch = work_queue.splice(0, 100);
   processing = true;
 
   try {
-    log(`Sending batch of ${batch.length}`);
+    console.log(`Sending batch of ${batch.length}`);
     const response = await chrome.runtime.sendMessage({
       type: "PROCESS",
       payload: {
@@ -100,12 +100,6 @@ async function schedule_send_payload() {
     });
 
     const processed_payload = response;
-
-    log(
-      `Batch processed; response ${
-        Array.isArray(response?.text) ? response.text.length : 0
-      } items`
-    );
     log("AFTER PROCESSING: ", processed_payload);
     highlight_elements(processed_payload);
   } catch (error) {
@@ -380,7 +374,6 @@ async function highlight_elements(payload) {
       ).singleNodeValue;
       log("highlight target ", el, "->", el?.textContent.slice(0, 150));
       if (!el) {
-        console.warn("Element not found with xpath: ", item.xpath);
         continue;
       }
       const aiScore = item.AI || 0;
@@ -411,7 +404,6 @@ async function highlight_elements(payload) {
       });
 
       el.addEventListener("mouseleave", hideTooltip);
-
       if (isAI && winningScore >= highThreshold) {
         aiCount += 1;
         el.style.setProperty("border", "5px solid red", "important");

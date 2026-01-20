@@ -101,6 +101,7 @@ function checkPopupState(stateObj) {
 }
 
 function update_results(changes) {
+  console.log(changes);
   if (
     changes.state.newValue.aiPosCount ||
     changes.state.newValue.aiSomeCount ||
@@ -132,5 +133,5 @@ function download_report() {
 
 // Open settings page
 document.getElementById("settings_button").onclick = (e) => {
-  window.location.href = chrome.runtime.getURL("ui/settings/settings.html");
+  window.location.href = chrome.runtime.getURL("settings.html");
 };

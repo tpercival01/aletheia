@@ -16,6 +16,7 @@ const config = {
     },
     popup: "./src/ui/popup/popup.js",
     content: "./src/content/content.js",
+    settings: "./src/ui/settings/settings.js"
   },
   output: {
     path: path.resolve(__dirname, "build"),
@@ -25,17 +26,27 @@ const config = {
     new HtmlWebpackPlugin({
       template: "./src/ui/popup/popup.html",
       filename: "popup.html",
+      chunks: ["popup"]
+    }),
+    new HtmlWebpackPlugin({
+      template: "./src/ui/settings/settings.html",
+      filename: "settings.html",
+      chunks: ["settings"]
     }),
     new CopyPlugin({
       patterns: [
         {
           from: "public",
-          to: ".", // Copies to build folder
+          to: ".",
         },
-        {
+        { 
           from: "src/ui/popup/popup.css",
           to: "popup.css",
         },
+        { 
+          from: "src/ui/settings/settings.css",
+          to: "settings.css",
+          },
       ],
     }),
   ],
