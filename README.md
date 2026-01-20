@@ -29,7 +29,14 @@ Unlike traditional detectors that require data to be sent to a remote server, Al
 - Training: PyTorch, Hugging Face optimum for ONNX conversion.
 
 ## Installation
+TO RUN ALETHEIA, YOU WILL NEED TO SET YOUR CHROME EXTENSIONS TO DEVELOPER MODE
 
+1. Open Chrome Extensions management page.
+2. Turn on "Developer Mode".
+3. Clone this repo into a safe location.
+4. Open the root folder and run the commands: "npm install" then "npm run build".
+5. Once done, you should see a "Build" folder.
+6. Now go back to chrome, click "Load unpacked" and select that build folder.
 
 ## Usage
 
