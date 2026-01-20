@@ -18,22 +18,15 @@ Unlike traditional detectors that require data to be sent to a remote server, Al
 
 - Optimized Performance: Features a 12.3ms average inference latency using 8-bit quantized models for minimal cognitive drag.
 
-## Technologies Used
+## Technology Stack
 
-*   **Backend & AI Inference:**
-    *   Python 3.9+
-    *   TensorFlow 2.x
-    *   Flask / FastAPI (for backend API development)
-    *   NumPy, Pandas, Scikit-learn (for data processing and evaluation)
-*   **Browser Extension (Frontend):**
-    *   JavaScript (ES6+)
-    *   HTML5, CSS3
-    *   Web browser APIs (Chrome/Firefox extensions API)
-*   **Development & Version Control:**
-    *   Git
-    *   GitHub
-    *   `pyenv` / `venv` (for Python environment management)
-    *   Homebrew (macOS package manager)
+- Model: Fine-tuned distilbert-base-uncased (Quantized to INT8).
+
+- Frontend: Chrome Manifest V3, JavaScript (ES6+), HTML/CSS.
+
+- Inference Engine: @xenova/transformers (WASM).
+
+- Training: PyTorch, Hugging Face optimum for ONNX conversion.
 
 ## Installation
 
