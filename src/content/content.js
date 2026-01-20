@@ -5,7 +5,7 @@ let mutation_observer;
 const xpaths_reset = [];
 let scheduler;
 
-let DEBUG = false;
+let DEBUG = true;
 function log(...args) {
   if (!DEBUG) return;
   console.log("%c[Aletheia]", "color: #7d57ff; font-weight: bold;", ...args);

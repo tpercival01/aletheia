@@ -1,42 +1,42 @@
-# aletheia
+# Aletheia
 
 ## Introduction
 
-Deepfake content across images, video, audio, and text is increasingly convincing and poses a serious threat to digital trust. **Aletheia** is a browser extension and educational toolkit designed to detect and demystify AI-generated media in real-time and teach users how to spot deepfakes or AI-generated content. Custom TensorFlow models trained on open-source datasets power lightweight in-browser scans combined with on-demand server analysis. An interactive companion website with a suite of web modules, slide presentations, and quizzes builds user skills in deepfake detection. 
+As Generative AI (GAI) becomes increasingly sophisticated, distinguishing between human and synthetic text has become a critical challenge for digital literacy. Aletheia is a privacy-preserving Chrome Extension and educational framework designed to detect AI-generated text in real-time.
+
+Unlike traditional detectors that require data to be sent to a remote server, Aletheia runs entirely within the browser. It utilizes a quantized DistilBERT model executed via WebAssembly (WASM) to perform zero-latency inference without user data ever leaving the local device.
 
 ## Features
 
-*   **Real-time AI Content Detection:** Identify AI-generated images, videos, audio, and text encountered during web browsing.
-*   **Hybrid Client-Server Architecture:** Balances performance with computational demands, utilizing a lightweight browser component and a powerful server-side inference engine.
-*   **Multimodal Analysis:** Employs specialized TensorFlow models (CNNs for visual, Transformers for audio/text) for comprehensive deepfake detection.
-*   **Interactive Educational Modules:** Web-based modules, slide presentations, and quizzes to teach users about deepfake generation and detection techniques.
-*   **Skill Building & Awareness:** Aims to enhance digital literacy and empower users to recognize manipulated content independently.
-*   **User Alerts:** Provides immediate, non-intrusive alerts for suspect media directly within the browser.
+- Client-Side Inference: Powered by Transformers.js and ONNX Runtime, ensuring 100% data privacy. No API keys, no servers, no data leakage.
 
-## Technologies Used
+- Real-Time DOM Analysis: Utilizes an optimized MutationObserver to scan dynamic content (e.g., Reddit, Twitter/X) without impacting browser performance.
 
-*   **Backend & AI Inference:**
-    *   Python 3.9+
-    *   TensorFlow 2.x
-    *   Flask / FastAPI (for backend API development)
-    *   NumPy, Pandas, Scikit-learn (for data processing and evaluation)
-*   **Browser Extension (Frontend):**
-    *   JavaScript (ES6+)
-    *   HTML5, CSS3
-    *   Web browser APIs (Chrome/Firefox extensions API)
-*   **Development & Version Control:**
-    *   Git
-    *   GitHub
-    *   `pyenv` / `venv` (for Python environment management)
-    *   Homebrew (macOS package manager)
+- Explainable AI (XAI): Provides granular confidence scores via interactive tooltips, moving beyond binary "True/False" flags to help users understand probabilistic uncertainty.
+
+- Educational Ecosystem: Integrated with a companion pedagogical platform hosted on GitHub Pages, featuring interactive quizzes and modules to improve the user's biological detection capabilities.
+
+- Optimized Performance: Features a 12.3ms average inference latency using 8-bit quantized models for minimal cognitive drag.
+
+## Technology Stack
+
+- Model: Fine-tuned distilbert-base-uncased (Quantized to INT8).
+
+- Frontend: Chrome Manifest V3, JavaScript (ES6+), HTML/CSS.
+
+- Inference Engine: @xenova/transformers (WASM).
+
+- Training: PyTorch, Hugging Face optimum for ONNX conversion.
 
 ## Installation
+TO RUN ALETHEIA, YOU WILL NEED TO SET YOUR CHROME EXTENSIONS TO DEVELOPER MODE
 
-
-## Usage
-
-
-## Project Structure
+1. Open Chrome Extensions management page.
+2. Turn on "Developer Mode".
+3. Clone this repo into a safe location.
+4. Open the root folder and run the commands: "npm install" then "npm run build".
+5. Once done, you should see a "Build" folder.
+6. Now go back to chrome, click "Load unpacked" and select that build folder.
 
 ## Contributing
 
@@ -44,10 +44,3 @@ This repository primarily serves as the codebase for an MSc dissertation project
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgements
-
-* **Student:** Thomas Percival
-* **University:** University of Hull
-* **Supervisor:** 
-* **Spouse:** Marina Bostan

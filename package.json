@@ -2,7 +2,7 @@
   "name": "aletheia",
   "version": "1.0.0",
   "description": "Detect AI generated content",
-  "author": "Thomas Percival",
+  "author": "",
   "license": "MIT",
   "scripts": {
     "build": "webpack"
