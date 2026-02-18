@@ -28,7 +28,7 @@ Unlike traditional detectors that require data to be sent to a remote server, Al
 
 - Training: PyTorch, Hugging Face optimum for ONNX conversion.
 
-![Image title](aletheia.gif){ .image25percent }
+![Image title](aletheia.gif)
 
 ## Installation
 TO RUN ALETHEIA, YOU WILL NEED TO SET YOUR CHROME EXTENSIONS TO DEVELOPER MODE
